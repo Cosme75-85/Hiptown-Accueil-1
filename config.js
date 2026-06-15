@@ -42,10 +42,10 @@ const CONFIG = {
   // ── Notification ─────────────────────────────────────
   // Méthode d'envoi : "email" | "sms" | "webhook" | "none"
   // "none" = mode démo, aucun message réel n'est envoyé
-  notificationMethod: "none",
+  notificationMethod: "webhook",
 
   // Si notificationMethod = "webhook" :
   // Collez ici l'URL de votre webhook (Make, Zapier, n8n…)
-  webhookUrl: "",
+  webhookUrl: "https://hook.eu1.make.com/okegh73mppxm5g9n01ieg935gnmjnqt9",
 
 };
