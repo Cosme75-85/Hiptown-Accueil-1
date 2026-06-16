@@ -27,6 +27,14 @@ const CONFIG = {
       avatarColor: "#1e3a8a",
       contact:     "come@hiptown.com"  // ← remplacez par votre email ou numéro
     },
+        {
+      name:        "Anne-Lise Médalin",
+      role:        "Manageuse de ville",
+      initials:    "ALM",
+      avatarBg:    "#DBEAFE",
+      avatarColor: "#1e3a8a",
+      contact:     "alm@hiptown.com"  // ← remplacez par votre email ou numéro
+    },
 
     // Exemple de membre supplémentaire (décommentez pour activer) :
     // {
