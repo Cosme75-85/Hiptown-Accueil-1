@@ -46,6 +46,6 @@ const CONFIG = {
 
   // Si notificationMethod = "webhook" :
   // Collez ici l'URL de votre webhook (Make, Zapier, n8n…)
-  webhookUrl: "https://cosme75-85.github.io/Hiptown-Accueil-1/",
+  webhookUrl: "https://hook.eu1.make.com/ynqh5ltlfx52a1mner85l1tjymbit9ql",
 
 };
