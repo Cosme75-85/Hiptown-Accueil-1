@@ -8,18 +8,20 @@
 }
 
 :root {
-  --blue:       #1D4ED8;
-  --blue-dark:  #1e40af;
-  --blue-light: #eff6ff;
-  --blue-border:#bfdbfe;
-  --green-bg:   #dcfce7;
-  --green:      #166534;
-  --text-dark:  #1e293b;
-  --text-mid:   #475569;
+  --navy:       #1e1847;
+  --navy-dark:  #150f33;
+  --yellow:     #ffe700;
+  --teal:       #67dfcb;
+  --teal-light: #e8faf7;
+  --teal-border:#a8edd8;
+  --green-bg:   #e8faf7;
+  --green:      #085041;
+  --text-dark:  #1e1847;
+  --text-mid:   #3d3566;
   --text-soft:  #64748b;
   --text-pale:  #94a3b8;
   --border:     #e2e8f0;
-  --bg:         #f0f4ff;
+  --bg:         #f5f4ff;
   --white:      #ffffff;
   --radius-sm:  8px;
   --radius-md:  12px;
@@ -41,13 +43,22 @@ body {
 ═══════════════════════════ */
 header {
   width: 100%;
-  background: var(--blue);
+  background: var(--navy);
   padding: 20px 24px;
   text-align: center;
 }
 
+header img.logo {
+  height: 48px;
+  object-fit: contain;
+  margin-bottom: 8px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 header h1 {
-  color: var(--white);
+  color: var(--yellow);
   font-size: 24px;
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -97,9 +108,9 @@ header p {
 }
 
 .person-card:hover {
-  border-color: var(--blue);
+  border-color: var(--yellow);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(29, 78, 216, 0.10);
+  box-shadow: 0 4px 16px rgba(30, 24, 71, 0.12);
 }
 
 .person-card:active {
@@ -139,7 +150,7 @@ header p {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--blue);
+  color: var(--navy);
   cursor: pointer;
   margin-bottom: 20px;
   background: none;
@@ -151,8 +162,8 @@ header p {
 .back-btn:hover { text-decoration: underline; }
 
 .selected-card {
-  background: var(--blue-light);
-  border: 1.5px solid var(--blue-border);
+  background: var(--teal-light);
+  border: 1.5px solid var(--teal-border);
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   display: flex;
@@ -207,7 +218,7 @@ input[type="text"] {
 }
 
 input[type="text"]:focus {
-  border-color: var(--blue);
+  border-color: var(--teal);
 }
 
 input[type="text"].error {
@@ -217,8 +228,8 @@ input[type="text"].error {
 .send-btn {
   width: 100%;
   padding: 15px;
-  background: var(--blue);
-  color: var(--white);
+  background: var(--navy);
+  color: var(--yellow);
   border: none;
   border-radius: var(--radius-md);
   font-size: 15px;
@@ -227,7 +238,7 @@ input[type="text"].error {
   transition: background 0.15s, transform 0.1s;
 }
 
-.send-btn:hover  { background: var(--blue-dark); }
+.send-btn:hover  { background: var(--navy-dark); }
 .send-btn:active { transform: scale(0.98); }
 
 /* ═══════════════════════════
@@ -242,7 +253,7 @@ input[type="text"].error {
   width: 76px;
   height: 76px;
   border-radius: 50%;
-  background: var(--green-bg);
+  background: var(--teal-light);
   display: flex;
   align-items: center;
   justify-content: center;
