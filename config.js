@@ -1,432 +1,147 @@
-/* ═══════════════════════════
-   RESET & BASE
-═══════════════════════════ */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+// ═══════════════════════════════════════════════════════
+//  CONFIGURATION HIPTOWN ACCUEIL
+//  Modifiez ce fichier pour gérer les entreprises et contacts
+// ═══════════════════════════════════════════════════════
 
-:root {
-  --navy:       #1e1847;
-  --navy-dark:  #150f33;
-  --yellow:     #ffe700;
-  --teal:       #67dfcb;
-  --teal-light: #e8faf7;
-  --teal-border:#a8edd8;
-  --green:      #085041;
-  --text-dark:  #1e1847;
-  --text-mid:   #3d3566;
-  --text-soft:  #64748b;
-  --text-pale:  #94a3b8;
-  --border:     #e2e8f0;
-  --bg:         #f5f4ff;
-  --white:      #ffffff;
-  --radius-sm:  8px;
-  --radius-md:  12px;
-  --radius-lg:  14px;
-}
+const CONFIG = {
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: var(--text-dark);
-}
+  espaceName: "Hiptown",
 
-/* ═══════════════════════════
-   HEADER
-═══════════════════════════ */
-header {
-  width: 100%;
-  background: var(--navy);
-  padding: 12px 24px;
-  text-align: center;
-}
+  // ── Entreprises ──────────────────────────────────────
+  // featured: true = affichée en premier (Hiptown)
+  // logo: nom du fichier image (dans le même dossier)
+  // color: couleur de fond de la carte
+  // initials: affiché si pas de logo
+  companies: [
+    {
+      id:       "hiptown",
+      name:     "Hiptown",
+      featured: true,
+      logo:     "Logo%20Hiptown%20site.png",
+      color:    "#1e1847",
+      textColor:"#ffe700",
+      initials: "HT",
+    },
+    {
+      id:       "espace-temps",
+      name:     "Espace Temps",
+      featured: false,
+      logo:     null,
+      color:    "#e0f2fe",
+      textColor:"#0369a1",
+      initials: "ET",
+    },
+    {
+      id:       "scaleway",
+      name:     "Scaleway",
+      featured: false,
+      logo:     null,
+      color:    "#fef3c7",
+      textColor:"#92400e",
+      initials: "SC",
+    },
+    {
+      id:       "synergie-bois",
+      name:     "Synergie Bois",
+      featured: false,
+      logo:     null,
+      color:    "#dcfce7",
+      textColor:"#166534",
+      initials: "SB",
+    },
+    {
+      id:       "yes-sign",
+      name:     "Yes Sign",
+      featured: false,
+      logo:     null,
+      color:    "#f3e8ff",
+      textColor:"#7e22ce",
+      initials: "YS",
+    },
+  ],
 
-header img.logo {
-  height: 60px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto 6px;
-  filter: brightness(10);
-}
+  // ── Contacts ─────────────────────────────────────────
+  // companyId doit correspondre à l'id de l'entreprise ci-dessus
+  coworkers: [
+    {
+      name:        "Anne-Lise Médalin",
+      role:        "Manageuse de ville",
+      initials:    "ALM",
+      avatarBg:    "#1e1847",
+      avatarColor: "#ffe700",
+      contact:     "alm@hiptown.com",
+      companyId:   "hiptown",
+    },
+    {
+      name:        "Côme Chabridon",
+      role:        "Assistant manageur",
+      initials:    "CC",
+      avatarBg:    "#1e1847",
+      avatarColor: "#ffe700",
+      contact:     "cc@hiptown.com",
+      companyId:   "hiptown",
+    },
+    {
+      name:        "Agnès Bertoni",
+      role:        "Contact",
+      initials:    "AB",
+      avatarBg:    "#f3e8ff",
+      avatarColor: "#7e22ce",
+      contact:     "",
+      companyId:   "yes-sign",
+    },
+    {
+      name:        "Christelle Barraud",
+      role:        "Contact",
+      initials:    "CB",
+      avatarBg:    "#f3e8ff",
+      avatarColor: "#7e22ce",
+      contact:     "",
+      companyId:   "yes-sign",
+    },
+    {
+      name:        "Amnay",
+      role:        "Contact",
+      initials:    "AM",
+      avatarBg:    "#fef3c7",
+      avatarColor: "#92400e",
+      contact:     "",
+      companyId:   "scaleway",
+    },
+    {
+      name:        "Loïc Lambert",
+      role:        "Contact",
+      initials:    "LL",
+      avatarBg:    "#dcfce7",
+      avatarColor: "#166534",
+      contact:     "",
+      companyId:   "synergie-bois",
+    },
+    {
+      name:        "Martin Vernay",
+      role:        "Contact",
+      initials:    "MV",
+      avatarBg:    "#e0f2fe",
+      avatarColor: "#0369a1",
+      contact:     "",
+      companyId:   "espace-temps",
+    },
+    {
+      name:        "Victor Morin",
+      role:        "Contact",
+      initials:    "VM",
+      avatarBg:    "#e0f2fe",
+      avatarColor: "#0369a1",
+      contact:     "",
+      companyId:   "espace-temps",
+    },
+  ],
 
-header p {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 13px;
-}
+  // ── EmailJS ───────────────────────────────────────────
+  emailjs: {
+    publicKey:  "5HaskNyk1h8eA_Ee6",
+    serviceId:  "service_vs6rgr8",
+    templateId: "template_f4lbzo5",
+  },
 
-/* ═══════════════════════════
-   CONTAINER
-═══════════════════════════ */
-.container {
-  width: 100%;
-  max-width: 540px;
-  padding: 28px 16px 48px;
-  flex: 1;
-}
-
-/* ═══════════════════════════
-   TITRES & RECHERCHE
-═══════════════════════════ */
-.step-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-dark);
-  margin-bottom: 16px;
-  text-align: center;
-}
-
-.search-wrap {
-  margin-bottom: 18px;
-}
-
-.search-wrap input {
-  width: 100%;
-  padding: 13px 16px;
-  font-size: 15px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--white);
-  color: var(--text-dark);
-  outline: none;
-  transition: border-color 0.15s;
-  margin-bottom: 0;
-}
-
-.search-wrap input:focus {
-  border-color: var(--teal);
-}
-
-.search-results-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-soft);
-  margin-bottom: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* ═══════════════════════════
-   GRILLE ENTREPRISES
-═══════════════════════════ */
-.companies-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-
-.company-card {
-  background: var(--white);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 20px 10px 14px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
-}
-
-.company-card:hover {
-  border-color: var(--yellow);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(30, 24, 71, 0.12);
-}
-
-/* Carte Hiptown — pleine largeur */
-.company-featured {
-  grid-column: 1 / -1;
-  background: var(--navy);
-  border-color: var(--navy);
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.company-featured:hover {
-  border-color: var(--yellow);
-  box-shadow: 0 4px 20px rgba(30, 24, 71, 0.25);
-}
-
-/* Logo dans la carte Hiptown */
-.company-logo-featured {
-  height: 70px;
-  object-fit: contain;
-  display: block;
-  filter: brightness(10);
-}
-
-.company-logo {
-  height: 44px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto 10px;
-}
-
-.company-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0 auto 10px;
-}
-
-.company-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-dark);
-}
-
-/* ═══════════════════════════
-   ALPHABET BAR
-═══════════════════════════ */
-.alphabet-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 18px;
-}
-
-.alpha-btn {
-  padding: 6px 10px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--white);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--navy);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.alpha-btn:hover {
-  background: var(--yellow);
-  border-color: var(--yellow);
-}
-
-/* ═══════════════════════════
-   GRILLE PERSONNES
-═══════════════════════════ */
-.people-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.person-card {
-  background: var(--white);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 18px 10px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
-}
-
-.person-card:hover {
-  border-color: var(--yellow);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(30, 24, 71, 0.12);
-}
-
-.p-avatar {
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 auto 10px;
-}
-
-.p-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-dark);
-  line-height: 1.3;
-}
-
-.p-role {
-  font-size: 11px;
-  color: var(--text-pale);
-  margin-top: 3px;
-}
-
-/* ═══════════════════════════
-   STEP 2 — FORMULAIRE
-═══════════════════════════ */
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--navy);
-  cursor: pointer;
-  margin-bottom: 20px;
-  background: none;
-  border: none;
-  padding: 0;
-  font-weight: 500;
-}
-
-.back-btn:hover { text-decoration: underline; }
-
-.selected-card {
-  background: var(--teal-light);
-  border: 1.5px solid var(--teal-border);
-  border-radius: var(--radius-lg);
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
-}
-
-.sel-avatar {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.sel-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-dark);
-}
-
-.sel-role {
-  font-size: 12px;
-  color: var(--text-soft);
-  margin-top: 2px;
-}
-
-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-mid);
-  margin-bottom: 6px;
-}
-
-input[type="text"] {
-  width: 100%;
-  padding: 13px 14px;
-  font-size: 15px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--white);
-  color: var(--text-dark);
-  margin-bottom: 18px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-input[type="text"]:focus { border-color: var(--teal); }
-input[type="text"].error { border-color: #ef4444; }
-
-.send-btn {
-  width: 100%;
-  padding: 15px;
-  background: var(--navy);
-  color: var(--yellow);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
-}
-
-.send-btn:hover  { background: var(--navy-dark); }
-.send-btn:active { transform: scale(0.98); }
-
-/* ═══════════════════════════
-   STEP 3 — CONFIRMATION
-═══════════════════════════ */
-#step-success {
-  text-align: center;
-  padding: 24px 0;
-}
-
-.check-circle {
-  width: 76px;
-  height: 76px;
-  border-radius: 50%;
-  background: var(--teal-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 18px;
-  font-size: 38px;
-  color: var(--green);
-}
-
-#step-success h2 {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-dark);
-}
-
-#step-success p {
-  font-size: 14px;
-  color: var(--text-soft);
-  margin-top: 10px;
-  line-height: 1.6;
-  max-width: 340px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.reset-btn {
-  margin-top: 28px;
-  padding: 12px 30px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--white);
-  font-size: 14px;
-  color: var(--text-soft);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.reset-btn:hover { background: #f8fafc; }
-
-/* ═══════════════════════════
-   FOOTER
-═══════════════════════════ */
-footer {
-  width: 100%;
-  text-align: center;
-  padding: 16px;
-  font-size: 12px;
-  color: var(--text-pale);
-  border-top: 1px solid var(--border);
-  background: var(--white);
-}
-
-/* ═══════════════════════════
-   RESPONSIVE
-═══════════════════════════ */
-@media (max-width: 400px) {
-  .companies-grid,
-  .people-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
+};
