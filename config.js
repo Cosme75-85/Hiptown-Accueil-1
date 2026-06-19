@@ -1,59 +1,147 @@
 // ═══════════════════════════════════════════════════════
-//  CONFIGURATION HIPTOWN
-//  Modifiez ce fichier pour gérer les membres de l'équipe
+//  CONFIGURATION HIPTOWN ACCUEIL
+//  Modifiez ce fichier pour gérer les entreprises et contacts
 // ═══════════════════════════════════════════════════════
 
 const CONFIG = {
 
-  // Nom affiché dans le header et le footer
   espaceName: "Hiptown",
 
-  // ── Membres de l'équipe ──────────────────────────────
-  // Pour chaque membre, remplissez :
-  //   name     : prénom et nom
-  //   role     : poste / titre
-  //   initials : 2 lettres pour l'avatar
-  //   avatarBg : couleur de fond de l'avatar (hex)
-  //   avatarColor : couleur du texte de l'avatar (hex)
-  //   contact  : email OU numéro de téléphone (jamais affiché au visiteur)
-  //              → sera utilisé pour envoyer la notification
-  // ─────────────────────────────────────────────────────
+  // ── Entreprises ──────────────────────────────────────
+  // featured: true = affichée en premier (Hiptown)
+  // logo: nom du fichier image (dans le même dossier)
+  // color: couleur de fond de la carte
+  // initials: affiché si pas de logo
+  companies: [
+    {
+      id:       "hiptown",
+      name:     "Hiptown",
+      featured: true,
+      logo:     "Logo%20Hiptown%20site.png",
+      color:    "#1e1847",
+      textColor:"#ffe700",
+      initials: "HT",
+    },
+    {
+      id:       "espace-temps",
+      name:     "Espace Temps",
+      featured: false,
+      logo:     null,
+      color:    "#e0f2fe",
+      textColor:"#0369a1",
+      initials: "ET",
+    },
+    {
+      id:       "scaleway",
+      name:     "Scaleway",
+      featured: false,
+      logo:     null,
+      color:    "#fef3c7",
+      textColor:"#92400e",
+      initials: "SC",
+    },
+    {
+      id:       "synergie-bois",
+      name:     "Synergie Bois",
+      featured: false,
+      logo:     null,
+      color:    "#dcfce7",
+      textColor:"#166534",
+      initials: "SB",
+    },
+    {
+      id:       "yes-sign",
+      name:     "Yes Sign",
+      featured: false,
+      logo:     null,
+      color:    "#f3e8ff",
+      textColor:"#7e22ce",
+      initials: "YS",
+    },
+  ],
+
+  // ── Contacts ─────────────────────────────────────────
+  // companyId doit correspondre à l'id de l'entreprise ci-dessus
   coworkers: [
+    {
+      name:        "Anne-Lise Médalin",
+      role:        "Manageuse de ville",
+      initials:    "ALM",
+      avatarBg:    "#1e1847",
+      avatarColor: "#ffe700",
+      contact:     "alm@hiptown.com",
+      companyId:   "hiptown",
+    },
     {
       name:        "Côme Chabridon",
       role:        "Assistant manageur",
       initials:    "CC",
-      avatarBg:    "#DBEAFE",
-      avatarColor: "#1e3a8a",
-      contact:     "cc@hiptown.com"  // ← remplacez par votre email ou numéro
+      avatarBg:    "#1e1847",
+      avatarColor: "#ffe700",
+      contact:     "cc@hiptown.com",
+      companyId:   "hiptown",
     },
-        {
-      name:        "Anne-Lise Médalin",
-      role:        "Manageuse de ville",
-      initials:    "ALM",
-      avatarBg:    "#DBEAFE",
-      avatarColor: "#1e3a8a",
-      contact:     "alm@hiptown.com"  // ← remplacez par votre email ou numéro
+    {
+      name:        "Agnès Bertoni",
+      role:        "Contact",
+      initials:    "AB",
+      avatarBg:    "#f3e8ff",
+      avatarColor: "#7e22ce",
+      contact:     "",
+      companyId:   "yes-sign",
     },
-
-    // Exemple de membre supplémentaire (décommentez pour activer) :
-    // {
-    //   name:        "Prénom Nom",
-    //   role:        "Poste",
-    //   initials:    "PN",
-    //   avatarBg:    "#E1F5EE",
-    //   avatarColor: "#085041",
-    //   contact:     "prenom@hiptown.com"
-    // },
+    {
+      name:        "Christelle Barraud",
+      role:        "Contact",
+      initials:    "CB",
+      avatarBg:    "#f3e8ff",
+      avatarColor: "#7e22ce",
+      contact:     "",
+      companyId:   "yes-sign",
+    },
+    {
+      name:        "Amnay",
+      role:        "Contact",
+      initials:    "AM",
+      avatarBg:    "#fef3c7",
+      avatarColor: "#92400e",
+      contact:     "",
+      companyId:   "scaleway",
+    },
+    {
+      name:        "Loïc Lambert",
+      role:        "Contact",
+      initials:    "LL",
+      avatarBg:    "#dcfce7",
+      avatarColor: "#166534",
+      contact:     "",
+      companyId:   "synergie-bois",
+    },
+    {
+      name:        "Martin Vernay",
+      role:        "Contact",
+      initials:    "MV",
+      avatarBg:    "#e0f2fe",
+      avatarColor: "#0369a1",
+      contact:     "",
+      companyId:   "espace-temps",
+    },
+    {
+      name:        "Victor Morin",
+      role:        "Contact",
+      initials:    "VM",
+      avatarBg:    "#e0f2fe",
+      avatarColor: "#0369a1",
+      contact:     "",
+      companyId:   "espace-temps",
+    },
   ],
 
-  // ── Notification ─────────────────────────────────────
-  // Méthode d'envoi : "email" | "sms" | "webhook" | "none"
-  // "none" = mode démo, aucun message réel n'est envoyé
-  notificationMethod: "webhook",
-
-  // Si notificationMethod = "webhook" :
-  // Collez ici l'URL de votre webhook (Make, Zapier, n8n…)
-  webhookUrl: "https://hook.eu1.make.com/ynqh5ltlfx52a1mner85l1tjymbit9ql",
+  // ── EmailJS ───────────────────────────────────────────
+  emailjs: {
+    publicKey:  "5HaskNyk1h8eA_Ee6",
+    serviceId:  "service_vs6rgr8",
+    templateId: "template_f4lbzo5",
+  },
 
 };
