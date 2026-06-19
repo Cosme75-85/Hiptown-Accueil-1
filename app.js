@@ -1,28 +1,28 @@
 // ═══════════════════════════════════════════════════════
 //  HIPTOWN — ACCUEIL VISITEURS
-//  app.js — logique principale v2
+//  app.js — logique principale v3
 // ═══════════════════════════════════════════════════════
 
 (function () {
   "use strict";
 
-  // ── EmailJS ───────────────────────────────────────────
   emailjs.init(CONFIG.emailjs.publicKey);
 
-  // ── Éléments DOM ──────────────────────────────────────
-  const stepCompanies = document.getElementById("step-companies");
-  const stepPeople    = document.getElementById("step-people");
-  const stepForm      = document.getElementById("step-form");
-  const stepSuccess   = document.getElementById("step-success");
+  // ── DOM ───────────────────────────────────────────────
+  const stepCompanies        = document.getElementById("step-companies");
+  const stepPeople           = document.getElementById("step-people");
+  const stepForm             = document.getElementById("step-form");
+  const stepSuccess          = document.getElementById("step-success");
 
-  const companiesGrid    = document.getElementById("companies-grid");
-  const companySearch    = document.getElementById("company-search");
+  const companiesGrid        = document.getElementById("companies-grid");
+  const companySearch        = document.getElementById("company-search");
+  const peopleSearchResults  = document.getElementById("people-search-results");
+  const peopleSearchGrid     = document.getElementById("people-search-grid");
 
-  const peopleGrid       = document.getElementById("people-grid");
-  const peopleSearch     = document.getElementById("people-search");
-  const alphabetBar      = document.getElementById("alphabet-bar");
+  const peopleGrid           = document.getElementById("people-grid");
+  const alphabetBar          = document.getElementById("alphabet-bar");
   const selectedCompanyTitle = document.getElementById("selected-company-title");
-  const backToCompanies  = document.getElementById("back-to-companies");
+  const backToCompanies      = document.getElementById("back-to-companies");
 
   const backBtn     = document.getElementById("back-btn");
   const sendBtn     = document.getElementById("send-btn");
@@ -38,12 +38,11 @@
 
   document.getElementById("year").textContent = new Date().getFullYear();
 
-  // ── État ──────────────────────────────────────────────
   let selectedPerson  = null;
   let selectedCompany = null;
   let currentPeople   = [];
 
-  // ── Affichage des étapes ──────────────────────────────
+  // ── Étapes ────────────────────────────────────────────
   function showStep(step) {
     stepCompanies.hidden = step !== "companies";
     stepPeople.hidden    = step !== "people";
@@ -70,17 +69,18 @@
     filtered.forEach(function (company) {
       const card = document.createElement("div");
       card.className = "company-card";
+      if (company.featured) card.classList.add("company-featured");
 
       let inner = "";
-      if (company.logo) {
+      if (company.featured) {
+        // Carte Hiptown : juste le logo centré, grand
+        inner = '<img src="' + company.logo + '" alt="' + company.name + '" class="company-logo-featured"/>';
+      } else if (company.logo) {
         inner = '<img src="' + company.logo + '" alt="' + company.name + '" class="company-logo"/>';
+        inner += '<div class="company-name">' + company.name + '</div>';
       } else {
         inner = '<div class="company-avatar" style="background:' + company.color + ';color:' + company.textColor + ';">' + company.initials + '</div>';
-      }
-      inner += '<div class="company-name">' + company.name + '</div>';
-
-      if (company.featured) {
-        card.classList.add("company-featured");
+        inner += '<div class="company-name">' + company.name + '</div>';
       }
 
       card.innerHTML = inner;
@@ -88,6 +88,44 @@
       companiesGrid.appendChild(card);
     });
   }
+
+  // ── Recherche globale (entreprise + contact) ──────────
+  companySearch.addEventListener("input", function () {
+    const q = this.value.trim().toLowerCase();
+
+    if (!q) {
+      peopleSearchResults.hidden = true;
+      buildCompanies();
+      return;
+    }
+
+    // Recherche dans les contacts
+    const matchPeople = CONFIG.coworkers.filter(p =>
+      p.name.toLowerCase().includes(q)
+    );
+
+    // Affiche les contacts trouvés
+    if (matchPeople.length > 0) {
+      peopleSearchResults.hidden = false;
+      peopleSearchGrid.innerHTML = "";
+      matchPeople.forEach(function (person) {
+        const card = document.createElement("div");
+        card.className = "person-card";
+        card.innerHTML =
+          '<div class="p-avatar" style="background:' + person.avatarBg +
+          ';color:' + person.avatarColor + ';">' + person.initials + '</div>' +
+          '<div class="p-name">' + person.name + '</div>' +
+          '<div class="p-role">' + person.role + '</div>';
+        card.addEventListener("click", function () { selectPerson(person); });
+        peopleSearchGrid.appendChild(card);
+      });
+    } else {
+      peopleSearchResults.hidden = true;
+    }
+
+    // Filtre aussi les entreprises
+    buildCompanies(q);
+  });
 
   function selectCompany(company) {
     selectedCompany = company;
@@ -97,15 +135,10 @@
       .filter(p => p.companyId === company.id)
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    peopleSearch.value = "";
     buildPeople(currentPeople);
     buildAlphabet(currentPeople);
     showStep("people");
   }
-
-  companySearch.addEventListener("input", function () {
-    buildCompanies(this.value);
-  });
 
   // ── ÉTAPE 2 : Personnes ───────────────────────────────
   function buildPeople(list) {
@@ -125,7 +158,6 @@
         ';color:' + person.avatarColor + ';">' + person.initials + '</div>' +
         '<div class="p-name">' + person.name + '</div>' +
         '<div class="p-role">' + person.role + '</div>';
-
       card.addEventListener("click", function () { selectPerson(person); });
       peopleGrid.appendChild(card);
     });
@@ -147,15 +179,10 @@
     });
   }
 
-  peopleSearch.addEventListener("input", function () {
-    const q = this.value.toLowerCase();
-    const filtered = currentPeople.filter(p =>
-      p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q)
-    );
-    buildPeople(filtered);
-  });
-
   backToCompanies.addEventListener("click", function () {
+    companySearch.value = "";
+    peopleSearchResults.hidden = true;
+    buildCompanies();
     showStep("companies");
   });
 
@@ -218,6 +245,9 @@
   function reset() {
     selectedPerson  = null;
     selectedCompany = null;
+    companySearch.value = "";
+    peopleSearchResults.hidden = true;
+    buildCompanies();
     showStep("companies");
   }
 
