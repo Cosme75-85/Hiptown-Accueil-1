@@ -20,8 +20,15 @@
   <section id="step-companies">
     <p class="step-title">Quelle entreprise souhaitez-vous contacter ?</p>
     <div class="search-wrap">
-      <input type="text" id="company-search" placeholder="🔍 Rechercher une entreprise…" autocomplete="off"/>
+      <input type="text" id="company-search" placeholder="🔍 Rechercher une entreprise ou un contact…" autocomplete="off"/>
     </div>
+
+    <!-- Résultats de recherche contacts -->
+    <div id="people-search-results" hidden>
+      <p class="search-results-title">Contacts trouvés</p>
+      <div class="people-grid" id="people-search-grid"></div>
+    </div>
+
     <div class="companies-grid" id="companies-grid"></div>
   </section>
 
@@ -29,9 +36,6 @@
   <section id="step-people" hidden>
     <button class="back-btn" id="back-to-companies">← Retour aux entreprises</button>
     <p class="step-title" id="selected-company-title"></p>
-    <div class="search-wrap">
-      <input type="text" id="people-search" placeholder="🔍 Rechercher un contact…" autocomplete="off"/>
-    </div>
     <div class="alphabet-bar" id="alphabet-bar"></div>
     <div class="people-grid" id="people-grid"></div>
   </section>
