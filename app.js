@@ -1,10 +1,18 @@
 // ═══════════════════════════════════════════════════════
 //  HIPTOWN — ACCUEIL VISITEURS
-//  app.js — logique principale
+//  app.js — logique principale avec EmailJS
 // ═══════════════════════════════════════════════════════
 
 (function () {
   "use strict";
+
+  // ── Configuration EmailJS ─────────────────────────────
+  const EMAILJS_PUBLIC_KEY  = "5HaskNyk1h8eA_Ee6";
+  const EMAILJS_SERVICE_ID  = "service_wg3hm8e";
+  const EMAILJS_TEMPLATE_ID = "template_f4lbzo5";
+
+  // ── Initialisation EmailJS ────────────────────────────
+  emailjs.init(EMAILJS_PUBLIC_KEY);
 
   // ── Éléments DOM ──────────────────────────────────────
   const stepList    = document.getElementById("step-list");
@@ -97,25 +105,17 @@
       ? name + " vous attend en bas. Message : « " + visitorMsg.value.trim() + " »"
       : name + " vous attend en bas de l'immeuble.";
 
-    // ── Envoi selon la méthode configurée ────────────────
-    if (CONFIG.notificationMethod === "webhook" && CONFIG.webhookUrl) {
-      try {
-        await fetch(CONFIG.webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            person:  selectedPerson.name,
-            contact: selectedPerson.contact,
-            visitor: name,
-            message: message,
-          }),
-        });
-      } catch (err) {
-        console.error("Erreur envoi webhook :", err);
-      }
+    try {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email: selectedPerson.contact,
+        to_name:  selectedPerson.name,
+        visitor:  name,
+        message:  message,
+      });
+    } catch (err) {
+      console.error("Erreur EmailJS :", err);
     }
 
-    // Mode "none" ou après envoi : afficher la confirmation
     successText.textContent =
       selectedPerson.name + " a été prévenu(e) de votre arrivée.";
     if (visitorMsg.value.trim()) {
