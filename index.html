@@ -14,50 +14,60 @@
   <p>Espace de coworking — Accueil visiteurs</p>
 </header>
 
-  <main class="container">
+<main class="container">
 
-    <!-- ÉTAPE 1 : sélection de la personne -->
-    <section id="step-list">
-      <p class="step-title">Qui souhaitez-vous voir ?</p>
-      <div class="people-grid" id="people-grid"></div>
-    </section>
+  <!-- ÉTAPE 1 : Sélection de l'entreprise -->
+  <section id="step-companies">
+    <p class="step-title">Quelle entreprise souhaitez-vous contacter ?</p>
+    <div class="search-wrap">
+      <input type="text" id="company-search" placeholder="🔍 Rechercher une entreprise…" autocomplete="off"/>
+    </div>
+    <div class="companies-grid" id="companies-grid"></div>
+  </section>
 
-    <!-- ÉTAPE 2 : formulaire visiteur -->
-    <section id="step-form" hidden>
-      <button class="back-btn" id="back-btn" aria-label="Retour à la liste">← Retour</button>
+  <!-- ÉTAPE 2 : Sélection de la personne -->
+  <section id="step-people" hidden>
+    <button class="back-btn" id="back-to-companies">← Retour aux entreprises</button>
+    <p class="step-title" id="selected-company-title"></p>
+    <div class="search-wrap">
+      <input type="text" id="people-search" placeholder="🔍 Rechercher un contact…" autocomplete="off"/>
+    </div>
+    <div class="alphabet-bar" id="alphabet-bar"></div>
+    <div class="people-grid" id="people-grid"></div>
+  </section>
 
-      <div class="selected-card">
-        <div class="sel-avatar" id="sel-avatar"></div>
-        <div>
-          <div class="sel-name" id="sel-name"></div>
-          <div class="sel-role" id="sel-role"></div>
-        </div>
+  <!-- ÉTAPE 3 : Formulaire visiteur -->
+  <section id="step-form" hidden>
+    <button class="back-btn" id="back-btn" aria-label="Retour à la liste">← Retour</button>
+    <div class="selected-card">
+      <div class="sel-avatar" id="sel-avatar"></div>
+      <div>
+        <div class="sel-name" id="sel-name"></div>
+        <div class="sel-role" id="sel-role"></div>
       </div>
+    </div>
+    <label for="visitor-name">Votre nom <span aria-hidden="true">*</span></label>
+    <input type="text" id="visitor-name" placeholder="Ex : Marie Dupont" autocomplete="name" required/>
+    <label for="visitor-msg">Message (optionnel)</label>
+    <input type="text" id="visitor-msg" placeholder="Ex : J'ai un rendez-vous à 14h"/>
+    <button class="send-btn" id="send-btn">Prévenir de mon arrivée</button>
+  </section>
 
-      <label for="visitor-name">Votre nom <span aria-hidden="true">*</span></label>
-      <input type="text" id="visitor-name" placeholder="Ex : Marie Dupont" autocomplete="name" required/>
+  <!-- ÉTAPE 4 : Confirmation -->
+  <section id="step-success" hidden>
+    <div class="check-circle" aria-hidden="true">✓</div>
+    <h2>Message envoyé !</h2>
+    <p id="success-text"></p>
+    <button class="reset-btn" id="reset-btn">Retour à l'accueil</button>
+  </section>
 
-      <label for="visitor-msg">Message (optionnel)</label>
-      <input type="text" id="visitor-msg" placeholder="Ex : J'ai un rendez-vous à 14h"/>
+</main>
 
-      <button class="send-btn" id="send-btn">Prévenir de mon arrivée</button>
-    </section>
+<footer>
+  <p>Hiptown &copy; <span id="year"></span></p>
+</footer>
 
-    <!-- ÉTAPE 3 : confirmation -->
-    <section id="step-success" hidden>
-      <div class="check-circle" aria-hidden="true">✓</div>
-      <h2>Message envoyé !</h2>
-      <p id="success-text"></p>
-      <button class="reset-btn" id="reset-btn">Retour à l'accueil</button>
-    </section>
-
-  </main>
-
-  <footer>
-    <p>Hiptown &copy; <span id="year"></span></p>
-  </footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="config.js"></script>
 <script src="app.js"></script>
 </body>
