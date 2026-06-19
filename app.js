@@ -8,7 +8,7 @@
 
   // ── Configuration EmailJS ─────────────────────────────
   const EMAILJS_PUBLIC_KEY  = "5HaskNyk1h8eA_Ee6";
-  const EMAILJS_SERVICE_ID  = "service_wg3hm8e";
+  const EMAILJS_SERVICE_ID  = "service_vs6rgr8";
   const EMAILJS_TEMPLATE_ID = "template_f4lbzo5";
 
   // ── Initialisation EmailJS ────────────────────────────
