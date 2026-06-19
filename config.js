@@ -25,7 +25,7 @@ const CONFIG = {
       initials:    "CC",
       avatarBg:    "#DBEAFE",
       avatarColor: "#1e3a8a",
-      contact:     "come@hiptown.com"  // ← remplacez par votre email ou numéro
+      contact:     "cc@hiptown.com"  // ← remplacez par votre email ou numéro
     },
         {
       name:        "Anne-Lise Médalin",
