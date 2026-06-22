@@ -62,7 +62,7 @@ const CONFIG = {
       id:       "La BAF",
       name:     "La BAF",
       featured: false,
-      logo:     "Logo la BAF.png",
+      logo:     "Logo_la_BAF.png",
       color:    "#f3e8ff",
       textColor:"#7e22ce",
       initials: "BAF",
