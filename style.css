@@ -49,7 +49,7 @@ header {
 }
 
 header img.logo {
-  height: 310px;
+  height: 100px;
   object-fit: contain;
   margin-bottom: 0px;
   display: block;
