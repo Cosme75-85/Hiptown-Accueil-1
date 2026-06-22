@@ -26,7 +26,7 @@ const CONFIG = {
       id:       "espace-temps",
       name:     "Espace Temps",
       featured: false,
-      logo:     null,
+      logo:     "Logo_espace_temps.png",
       color:    "#e0f2fe",
       textColor:"#0369a1",
       initials: "ET",
