@@ -44,7 +44,7 @@ const CONFIG = {
       id:       "synergie-bois",
       name:     "Synergie Bois",
       featured: false,
-      logo:     null,
+      logo:     "Logo_synergie_bois.png",
       color:    "#dcfce7",
       textColor:"#166534",
       initials: "SB",
