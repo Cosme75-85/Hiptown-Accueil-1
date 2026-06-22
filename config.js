@@ -35,7 +35,7 @@ const CONFIG = {
       id:       "scaleway",
       name:     "Scaleway",
       featured: false,
-      logo:     "Logo Scaleway.png",
+      logo:     "Logo_scaleway.png",
       color:    "#fef3c7",
       textColor:"#92400e",
       initials: "SC",
