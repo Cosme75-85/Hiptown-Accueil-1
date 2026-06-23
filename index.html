@@ -10,29 +10,52 @@
 <body>
 
 <header>
-  <img src="Logo Hiptown site.png" alt="Hiptown" class="logo"/>
+  <img src="Logo%20Hiptown%20site.png" alt="Hiptown" class="logo"/>
   <p>Espace de coworking — Accueil visiteurs</p>
 </header>
 
 <main class="container">
 
-  <!-- ÉTAPE 1 : Sélection de l'entreprise -->
+  <!-- ÉTAPE 0 : PIN -->
+  <section id="step-pin" hidden>
+    <div class="pin-box">
+      <div class="pin-company-logo" id="pin-company-logo"></div>
+      <p class="pin-title">Entrez votre code d'accès</p>
+      <div class="pin-dots" id="pin-dots">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="pin-error" id="pin-error">Code incorrect, réessayez.</div>
+      <div class="pin-keypad">
+        <button class="pin-key" data-val="1">1</button>
+        <button class="pin-key" data-val="2">2</button>
+        <button class="pin-key" data-val="3">3</button>
+        <button class="pin-key" data-val="4">4</button>
+        <button class="pin-key" data-val="5">5</button>
+        <button class="pin-key" data-val="6">6</button>
+        <button class="pin-key" data-val="7">7</button>
+        <button class="pin-key" data-val="8">8</button>
+        <button class="pin-key" data-val="9">9</button>
+        <button class="pin-key pin-back" data-val="back">⌫</button>
+        <button class="pin-key" data-val="0">0</button>
+        <button class="pin-key pin-cancel" data-val="cancel">✕</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 1 : Entreprises -->
   <section id="step-companies">
     <p class="step-title">Quelle entreprise souhaitez-vous contacter ?</p>
     <div class="search-wrap">
       <input type="text" id="company-search" placeholder="🔍 Rechercher une entreprise ou un contact…" autocomplete="off"/>
     </div>
-
-    <!-- Résultats de recherche contacts -->
     <div id="people-search-results" hidden>
       <p class="search-results-title">Contacts trouvés</p>
       <div class="people-grid" id="people-search-grid"></div>
     </div>
-
     <div class="companies-grid" id="companies-grid"></div>
   </section>
 
-  <!-- ÉTAPE 2 : Sélection de la personne -->
+  <!-- ÉTAPE 2 : Personnes -->
   <section id="step-people" hidden>
     <button class="back-btn" id="back-to-companies">← Retour aux entreprises</button>
     <p class="step-title" id="selected-company-title"></p>
@@ -40,9 +63,9 @@
     <div class="people-grid" id="people-grid"></div>
   </section>
 
-  <!-- ÉTAPE 3 : Formulaire visiteur -->
+  <!-- ÉTAPE 3 : Formulaire -->
   <section id="step-form" hidden>
-    <button class="back-btn" id="back-btn" aria-label="Retour à la liste">← Retour</button>
+    <button class="back-btn" id="back-btn">← Retour</button>
     <div class="selected-card">
       <div class="sel-avatar" id="sel-avatar"></div>
       <div>
