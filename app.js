@@ -190,9 +190,10 @@
       return;
     }
 
-    const matchPeople = CONFIG.coworkers.filter(p =>
-      p.name.toLowerCase().includes(q)
-    );
+const matchPeople = CONFIG.coworkers.filter(p => {
+  const company = CONFIG.companies.find(c => c.id === p.companyId);
+  return p.name.toLowerCase().includes(q) && (!company || !company.pin);
+});
 
     if (matchPeople.length > 0) {
       peopleSearchResults.hidden = false;
