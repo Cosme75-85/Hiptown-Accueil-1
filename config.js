@@ -7,16 +7,12 @@ const CONFIG = {
 
   espaceName: "Hiptown",
 
-  // ── Entreprises ──────────────────────────────────────
-  // featured: true = affichée en premier (Hiptown)
-  // logo: nom du fichier image (dans le même dossier)
-  // color: couleur de fond de la carte
-  // initials: affiché si pas de logo
   companies: [
     {
       id:       "hiptown",
       name:     "Hiptown",
       featured: true,
+      pin:      null,
       logo:     "Logo%20Hiptown%20site.png",
       color:    "#1e1847",
       textColor:"#ffe700",
@@ -26,6 +22,7 @@ const CONFIG = {
       id:       "espace-temps",
       name:     "Espace Temps",
       featured: false,
+      pin:      "6874",
       logo:     "Logo_espace_temps.png",
       color:    "#e0f2fe",
       textColor:"#0369a1",
@@ -35,6 +32,7 @@ const CONFIG = {
       id:       "scaleway",
       name:     "Scaleway",
       featured: false,
+      pin:      "5489",
       logo:     "Logo_scaleway.png",
       color:    "#fef3c7",
       textColor:"#92400e",
@@ -44,6 +42,7 @@ const CONFIG = {
       id:       "synergie-bois",
       name:     "Synergie Bois",
       featured: false,
+      pin:      "1520",
       logo:     "Logo_synergie_bois.png",
       color:    "#dcfce7",
       textColor:"#166534",
@@ -53,42 +52,44 @@ const CONFIG = {
       id:       "yes-sign",
       name:     "Yes Sign",
       featured: false,
+      pin:      "0801",
       logo:     "Logo Yes sign.png",
       color:    "#f3e8ff",
       textColor:"#7e22ce",
       initials: "YS",
     },
-       {
-      id:       "La BAF",
+    {
+      id:       "la-baf",
       name:     "La BAF",
       featured: false,
+      pin:      "2654",
       logo:     "Logo_la_BAF.png",
-      color:    "#f3e8ff",
-      textColor:"#7e22ce",
+      color:    "#fff0e0",
+      textColor:"#92400e",
       initials: "BAF",
     },
-          {
-      id:       "AB tasty",
+    {
+      id:       "ab-tasty",
       name:     "AB Tasty",
       featured: false,
+      pin:      "6688",
       logo:     "Logo_ab_tasty.png",
-      color:    "#f3e8ff",
-      textColor:"#7e22ce",
+      color:    "#e0f0ff",
+      textColor:"#1e40af",
       initials: "ABT",
     },
-              {
-      id:       "Caisse d'épargne",
-      name:     "Caisse d'epargne",
+    {
+      id:       "caisse-epargne",
+      name:     "Caisse d'Épargne",
       featured: false,
+      pin:      "2073",
       logo:     "Logo_caisse_epargne.png",
-      color:    "#f3e8ff",
-      textColor:"#7e22ce",
+      color:    "#e8faf0",
+      textColor:"#166534",
       initials: "CE",
     },
   ],
 
-  // ── Contacts ─────────────────────────────────────────
-  // companyId doit correspondre à l'id de l'entreprise ci-dessus
   coworkers: [
     {
       name:        "Anne-Lise Médalin",
@@ -162,45 +163,44 @@ const CONFIG = {
       contact:     "",
       companyId:   "espace-temps",
     },
-        {
+    {
       name:        "Victor",
       role:        "Contact",
       initials:    "V",
-      avatarBg:    "#e0f2fe",
-      avatarColor: "#0369a1",
+      avatarBg:    "#fff0e0",
+      avatarColor: "#92400e",
       contact:     "",
-      companyId:   "La BAF",
+      companyId:   "la-baf",
     },
-        {
+    {
       name:        "Titouan",
       role:        "Contact",
       initials:    "T",
-      avatarBg:    "#e0f2fe",
-      avatarColor: "#0369a1",
+      avatarBg:    "#fff0e0",
+      avatarColor: "#92400e",
       contact:     "",
-      companyId:   "La BAF",
+      companyId:   "la-baf",
     },
-        {
+    {
       name:        "Jules Vienne",
       role:        "Contact",
       initials:    "JV",
-      avatarBg:    "#e0f2fe",
-      avatarColor: "#0369a1",
+      avatarBg:    "#e0f0ff",
+      avatarColor: "#1e40af",
       contact:     "",
-      companyId:   "AB Tasty",
+      companyId:   "ab-tasty",
     },
-        {
-      name:        "Angélique de taddéo",
+    {
+      name:        "Angélique de Taddéo",
       role:        "Contact",
       initials:    "ADT",
-      avatarBg:    "#e0f2fe",
-      avatarColor: "#0369a1",
+      avatarBg:    "#e0f0ff",
+      avatarColor: "#1e40af",
       contact:     "",
-      companyId:   "AB Tasty",
+      companyId:   "ab-tasty",
     },
   ],
 
-  // ── EmailJS ───────────────────────────────────────────
   emailjs: {
     publicKey:  "5HaskNyk1h8eA_Ee6",
     serviceId:  "service_vs6rgr8",
