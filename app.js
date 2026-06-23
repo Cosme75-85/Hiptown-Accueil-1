@@ -1,6 +1,5 @@
 // ═══════════════════════════════════════════════════════
-//  HIPTOWN — ACCUEIL VISITEURS
-//  app.js — logique principale v3
+//  HIPTOWN — ACCUEIL VISITEURS — app.js v4
 // ═══════════════════════════════════════════════════════
 
 (function () {
@@ -9,10 +8,16 @@
   emailjs.init(CONFIG.emailjs.publicKey);
 
   // ── DOM ───────────────────────────────────────────────
-  const stepCompanies        = document.getElementById("step-companies");
-  const stepPeople           = document.getElementById("step-people");
-  const stepForm             = document.getElementById("step-form");
-  const stepSuccess          = document.getElementById("step-success");
+  const stepPin          = document.getElementById("step-pin");
+  const stepCompanies    = document.getElementById("step-companies");
+  const stepPeople       = document.getElementById("step-people");
+  const stepForm         = document.getElementById("step-form");
+  const stepSuccess      = document.getElementById("step-success");
+
+  const pinDots          = document.getElementById("pin-dots").querySelectorAll("span");
+  const pinError         = document.getElementById("pin-error");
+  const pinCompanyLogo   = document.getElementById("pin-company-logo");
+  const pinKeys          = document.querySelectorAll(".pin-key");
 
   const companiesGrid        = document.getElementById("companies-grid");
   const companySearch        = document.getElementById("company-search");
@@ -38,18 +43,86 @@
 
   document.getElementById("year").textContent = new Date().getFullYear();
 
-  let selectedPerson  = null;
-  let selectedCompany = null;
-  let currentPeople   = [];
+  // ── État ──────────────────────────────────────────────
+  let selectedPerson    = null;
+  let selectedCompany   = null;
+  let currentPeople     = [];
+  let pinTarget         = null;
+  let pinCurrent        = "";
 
   // ── Étapes ────────────────────────────────────────────
   function showStep(step) {
+    stepPin.hidden       = step !== "pin";
     stepCompanies.hidden = step !== "companies";
     stepPeople.hidden    = step !== "people";
     stepForm.hidden      = step !== "form";
     stepSuccess.hidden   = step !== "success";
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  // ── PIN ───────────────────────────────────────────────
+  function openPin(company) {
+    pinTarget  = company;
+    pinCurrent = "";
+    pinError.hidden = true;
+    updatePinDots();
+
+    // Affiche le logo ou les initiales de l'entreprise
+    if (company.logo) {
+      pinCompanyLogo.innerHTML = '<img src="' + company.logo + '" alt="' + company.name + '" style="height:56px;object-fit:contain;"/>';
+    } else {
+      pinCompanyLogo.innerHTML = '<div style="width:64px;height:64px;border-radius:12px;background:' + company.color + ';color:' + company.textColor + ';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto;">' + company.initials + '</div>';
+    }
+
+    showStep("pin");
+  }
+
+  function updatePinDots() {
+    pinDots.forEach(function (dot, i) {
+      dot.classList.toggle("filled", i < pinCurrent.length);
+    });
+  }
+
+  pinKeys.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const val = this.getAttribute("data-val");
+
+      if (val === "cancel") {
+        pinCurrent = "";
+        pinTarget  = null;
+        showStep("companies");
+        return;
+      }
+
+      if (val === "back") {
+        pinCurrent = pinCurrent.slice(0, -1);
+        pinError.hidden = true;
+        updatePinDots();
+        return;
+      }
+
+      if (pinCurrent.length >= 4) return;
+      pinCurrent += val;
+      updatePinDots();
+
+      if (pinCurrent.length === 4) {
+        if (pinCurrent === pinTarget.pin) {
+          // PIN correct
+          setTimeout(function () {
+            enterCompany(pinTarget);
+          }, 200);
+        } else {
+          // PIN incorrect
+          pinError.hidden = false;
+          setTimeout(function () {
+            pinCurrent = "";
+            pinError.hidden = true;
+            updatePinDots();
+          }, 1000);
+        }
+      }
+    });
+  });
 
   // ── ÉTAPE 1 : Entreprises ─────────────────────────────
   function buildCompanies(filter) {
@@ -61,7 +134,7 @@
       .filter(c => !c.featured)
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    const all = [...featured, ...others];
+    const all      = [...featured, ...others];
     const filtered = filter
       ? all.filter(c => c.name.toLowerCase().includes(filter))
       : all;
@@ -73,7 +146,6 @@
 
       let inner = "";
       if (company.featured) {
-        // Carte Hiptown : juste le logo centré, grand
         inner = '<img src="' + company.logo + '" alt="' + company.name + '" class="company-logo-featured"/>';
       } else if (company.logo) {
         inner = '<img src="' + company.logo + '" alt="' + company.name + '" class="company-logo"/>';
@@ -84,12 +156,31 @@
       }
 
       card.innerHTML = inner;
-      card.addEventListener("click", function () { selectCompany(company); });
+      card.addEventListener("click", function () {
+        if (company.pin) {
+          openPin(company);
+        } else {
+          enterCompany(company);
+        }
+      });
       companiesGrid.appendChild(card);
     });
   }
 
-  // ── Recherche globale (entreprise + contact) ──────────
+  function enterCompany(company) {
+    selectedCompany = company;
+    selectedCompanyTitle.textContent = company.name;
+
+    currentPeople = CONFIG.coworkers
+      .filter(p => p.companyId === company.id)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    buildPeople(currentPeople);
+    buildAlphabet(currentPeople);
+    showStep("people");
+  }
+
+  // ── Recherche globale ──────────────────────────────────
   companySearch.addEventListener("input", function () {
     const q = this.value.trim().toLowerCase();
 
@@ -99,12 +190,10 @@
       return;
     }
 
-    // Recherche dans les contacts
     const matchPeople = CONFIG.coworkers.filter(p =>
       p.name.toLowerCase().includes(q)
     );
 
-    // Affiche les contacts trouvés
     if (matchPeople.length > 0) {
       peopleSearchResults.hidden = false;
       peopleSearchGrid.innerHTML = "";
@@ -123,32 +212,16 @@
       peopleSearchResults.hidden = true;
     }
 
-    // Filtre aussi les entreprises
     buildCompanies(q);
   });
-
-  function selectCompany(company) {
-    selectedCompany = company;
-    selectedCompanyTitle.textContent = company.name;
-
-    currentPeople = CONFIG.coworkers
-      .filter(p => p.companyId === company.id)
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    buildPeople(currentPeople);
-    buildAlphabet(currentPeople);
-    showStep("people");
-  }
 
   // ── ÉTAPE 2 : Personnes ───────────────────────────────
   function buildPeople(list) {
     peopleGrid.innerHTML = "";
-
     if (list.length === 0) {
       peopleGrid.innerHTML = '<p style="color:#94a3b8;text-align:center;grid-column:1/-1;">Aucun contact trouvé.</p>';
       return;
     }
-
     list.forEach(function (person) {
       const card = document.createElement("div");
       card.className = "person-card";
@@ -166,7 +239,6 @@
   function buildAlphabet(list) {
     alphabetBar.innerHTML = "";
     const letters = [...new Set(list.map(p => p.name[0].toUpperCase()))].sort();
-
     letters.forEach(function (letter) {
       const btn = document.createElement("button");
       btn.className = "alpha-btn";
@@ -186,20 +258,17 @@
     showStep("companies");
   });
 
-  // ── Sélection d'une personne ──────────────────────────
+  // ── Sélection personne ────────────────────────────────
   function selectPerson(person) {
     selectedPerson = person;
-
     selAvatar.style.background = person.avatarBg;
     selAvatar.style.color      = person.avatarColor;
     selAvatar.textContent      = person.initials;
     selName.textContent        = person.name;
     selRole.textContent        = person.role;
-
     visitorName.value = "";
     visitorMsg.value  = "";
     visitorName.classList.remove("error");
-
     showStep("form");
     visitorName.focus();
   }
@@ -212,7 +281,6 @@
       visitorName.focus();
       return;
     }
-
     visitorName.classList.remove("error");
     sendBtn.disabled = true;
     sendBtn.textContent = "Envoi en cours…";
@@ -236,7 +304,6 @@
     if (visitorMsg.value.trim()) {
       successText.textContent += " Votre message a bien été transmis.";
     }
-
     sendBtn.disabled = false;
     sendBtn.textContent = "Prévenir de mon arrivée";
     showStep("success");
