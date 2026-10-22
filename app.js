@@ -11,6 +11,7 @@
   const stepPin          = document.getElementById("step-pin");
   const stepCompanies    = document.getElementById("step-companies");
   const stepPeople       = document.getElementById("step-people");
+  const stepChoice       = document.getElementById("step-choice");
   const stepForm         = document.getElementById("step-form");
   const stepSuccess      = document.getElementById("step-success");
 
@@ -28,6 +29,13 @@
   const alphabetBar          = document.getElementById("alphabet-bar");
   const selectedCompanyTitle = document.getElementById("selected-company-title");
   const backToCompanies      = document.getElementById("back-to-companies");
+
+  const backToPeople = document.getElementById("back-to-people");
+  const choiceAvatar = document.getElementById("choice-avatar");
+  const choiceName   = document.getElementById("choice-name");
+  const choiceRole   = document.getElementById("choice-role");
+  const choiceNotify = document.getElementById("choice-notify");
+  const choiceCall   = document.getElementById("choice-call");
 
   const backBtn     = document.getElementById("back-btn");
   const sendBtn     = document.getElementById("send-btn");
@@ -55,6 +63,7 @@
     stepPin.hidden       = step !== "pin";
     stepCompanies.hidden = step !== "companies";
     stepPeople.hidden    = step !== "people";
+    stepChoice.hidden    = step !== "choice";
     stepForm.hidden      = step !== "form";
     stepSuccess.hidden   = step !== "success";
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -260,8 +269,24 @@ const matchPeople = CONFIG.coworkers.filter(p => {
   });
 
   // ── Sélection personne ────────────────────────────────
+  // Contact avec téléphone : choix « Prévenir » ou « Appeler »
   function selectPerson(person) {
     selectedPerson = person;
+    if (!person.phone) {
+      openForm(person);
+      return;
+    }
+    choiceAvatar.style.background = person.avatarBg;
+    choiceAvatar.style.color      = person.avatarColor;
+    choiceAvatar.textContent      = person.initials;
+    choiceName.textContent        = person.name;
+    choiceRole.textContent        = person.role;
+    choiceCall.href = "tel:" + person.phone;
+    choiceCall.querySelector(".choice-label").textContent = "Appeler " + person.name.split(" ")[0];
+    showStep("choice");
+  }
+
+  function openForm(person) {
     selAvatar.style.background = person.avatarBg;
     selAvatar.style.color      = person.avatarColor;
     selAvatar.textContent      = person.initials;
@@ -320,7 +345,11 @@ const matchPeople = CONFIG.coworkers.filter(p => {
   }
 
   // ── Écouteurs ─────────────────────────────────────────
-  backBtn.addEventListener("click", function () { showStep("people"); });
+  backBtn.addEventListener("click", function () {
+    showStep(selectedPerson && selectedPerson.phone ? "choice" : "people");
+  });
+  backToPeople.addEventListener("click", function () { showStep("people"); });
+  choiceNotify.addEventListener("click", function () { openForm(selectedPerson); });
   sendBtn.addEventListener("click", sendNotification);
   resetBtn.addEventListener("click", reset);
   visitorName.addEventListener("input", function () {

@@ -12,6 +12,7 @@
 <header>
   <img src="Logo%20Hiptown%20site.png" alt="Hiptown" class="logo"/>
   <p>Espace de coworking — Accueil visiteurs</p>
+  <p class="address">📍 Hiptown Emergence — 52 quai de Paludate, 33800 Bordeaux</p>
 </header>
 
 <main class="container">
@@ -61,6 +62,28 @@
     <p class="step-title" id="selected-company-title"></p>
     <div class="alphabet-bar" id="alphabet-bar"></div>
     <div class="people-grid" id="people-grid"></div>
+  </section>
+
+  <!-- ÉTAPE 2 bis : Choix (contacts avec téléphone) -->
+  <section id="step-choice" hidden>
+    <button class="back-btn" id="back-to-people">← Retour</button>
+    <div class="selected-card">
+      <div class="sel-avatar" id="choice-avatar"></div>
+      <div>
+        <div class="sel-name" id="choice-name"></div>
+        <div class="sel-role" id="choice-role"></div>
+      </div>
+    </div>
+    <div class="choice-grid">
+      <button class="choice-card" id="choice-notify">
+        <span class="choice-icon" aria-hidden="true">🔔</span>
+        <span class="choice-label">Prévenir de mon arrivée</span>
+      </button>
+      <a class="choice-card" id="choice-call" href="#">
+        <span class="choice-icon" aria-hidden="true">📞</span>
+        <span class="choice-label">Appeler</span>
+      </a>
+    </div>
   </section>
 
   <!-- ÉTAPE 3 : Formulaire -->

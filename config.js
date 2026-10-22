@@ -98,6 +98,7 @@ const CONFIG = {
       avatarBg:    "#1e1847",
       avatarColor: "#ffe700",
       contact:     "alm@hiptown.com",
+      phone:       "+33766876174",
       companyId:   "hiptown",
     },
     {
@@ -107,6 +108,7 @@ const CONFIG = {
       avatarBg:    "#1e1847",
       avatarColor: "#ffe700",
       contact:     "cc@hiptown.com",
+      phone:       "+33759680315",
       companyId:   "hiptown",
     },
     {
