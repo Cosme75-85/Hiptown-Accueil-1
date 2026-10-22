@@ -116,7 +116,7 @@ header p {
 ═══════════════════════════ */
 .companies-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -136,15 +136,10 @@ header p {
   box-shadow: 0 4px 16px rgba(30, 24, 71, 0.12);
 }
 
-/* Carte Hiptown — pleine largeur */
+/* Carte Hiptown — même taille que les autres, en premier, couleurs Hiptown */
 .company-featured {
-  grid-column: 1 / -1;
   background: var(--navy);
   border-color: var(--navy);
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .company-featured:hover {
@@ -152,16 +147,18 @@ header p {
   box-shadow: 0 4px 20px rgba(30, 24, 71, 0.25);
 }
 
-/* Logo dans la carte Hiptown */
-.company-logo-featured {
-  height: 70px;
-  object-fit: contain;
-  display: block;
+/* Logo dans la carte Hiptown (passé en blanc sur fond marine) */
+.company-featured .company-logo {
   filter: brightness(10);
+}
+
+.company-featured .company-name {
+  color: var(--yellow);
 }
 
 .company-logo {
   height: 44px;
+  max-width: 100%;
   object-fit: contain;
   display: block;
   margin: 0 auto 10px;
@@ -427,7 +424,7 @@ footer {
 @media (max-width: 400px) {
   .companies-grid,
   .people-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
