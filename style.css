@@ -136,10 +136,13 @@ header p {
   box-shadow: 0 4px 16px rgba(30, 24, 71, 0.12);
 }
 
-/* Carte Hiptown — même taille que les autres, en premier, couleurs Hiptown */
+/* Carte Hiptown — même taille que les autres, en premier, logo seul */
 .company-featured {
   background: var(--navy);
   border-color: var(--navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .company-featured:hover {
@@ -149,11 +152,9 @@ header p {
 
 /* Logo dans la carte Hiptown (passé en blanc sur fond marine) */
 .company-featured .company-logo {
+  height: 56px;
+  margin: 0 auto;
   filter: brightness(10);
-}
-
-.company-featured .company-name {
-  color: var(--yellow);
 }
 
 .company-logo {

@@ -145,7 +145,9 @@
       if (company.featured) card.classList.add("company-featured");
 
       let inner = "";
-      if (company.logo) {
+      if (company.featured) {
+        inner = '<img src="' + company.logo + '" alt="' + company.name + '" class="company-logo"/>';
+      } else if (company.logo) {
         inner = '<img src="' + company.logo + '" alt="' + company.name + '" class="company-logo"/>';
         inner += '<div class="company-name">' + company.name + '</div>';
       } else {
