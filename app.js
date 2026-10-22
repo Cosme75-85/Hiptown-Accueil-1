@@ -48,6 +48,7 @@
   const visitorName = document.getElementById("visitor-name");
   const visitorMsg  = document.getElementById("visitor-msg");
   const successText = document.getElementById("success-text");
+  const successTitle = document.querySelector("#step-success h2");
 
   document.getElementById("year").textContent = new Date().getFullYear();
 
@@ -133,6 +134,50 @@
     });
   });
 
+  // ── Entreprises du portail Hiptown (Firestore, collection « accueil ») ──
+  const SAFE_LOGO = /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/;
+  const PALETTE = [
+    ["#e0f2fe", "#0369a1"], ["#fef3c7", "#92400e"], ["#dcfce7", "#166534"],
+    ["#f3e8ff", "#7e22ce"], ["#fff0e0", "#92400e"], ["#e0f0ff", "#1e40af"],
+  ];
+
+  function escapeHtml(text) {
+    return String(text == null ? "" : text)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function initialsOf(name) {
+    return name.trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join("") || "?";
+  }
+
+  async function loadPortailCompanies() {
+    const p = CONFIG.portail;
+    if (!p || !p.firestoreUrl) return;
+    try {
+      const res = await fetch(p.firestoreUrl + "?pageSize=300&key=" + encodeURIComponent(p.apiKey));
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      const known = new Set(CONFIG.companies.map(c => c.id));
+      (data.documents || []).forEach(function (d, i) {
+        const f = d.fields || {};
+        const id = d.name.split("/").pop();
+        const name = (f.name && f.name.stringValue || "").trim();
+        const siteId = f.siteId && f.siteId.stringValue;
+        if (!name || known.has(id) || (p.siteId && siteId !== p.siteId)) return;
+        const logo = f.logo && f.logo.stringValue;
+        const colors = PALETTE[i % PALETTE.length];
+        CONFIG.companies.push({
+          id: id, name: name, featured: false, pin: null, fromPortail: true,
+          logo: SAFE_LOGO.test(logo || "") ? logo : "",
+          color: colors[0], textColor: colors[1], initials: initialsOf(name),
+        });
+      });
+    } catch (err) {
+      console.error("Entreprises du portail non chargées :", err);
+    }
+  }
+
   // ── ÉTAPE 1 : Entreprises ─────────────────────────────
   function buildCompanies(filter) {
     companiesGrid.innerHTML = "";
@@ -153,20 +198,23 @@
       card.className = "company-card";
       if (company.featured) card.classList.add("company-featured");
 
+      const name = escapeHtml(company.name);
       let inner = "";
       if (company.featured) {
-        inner = '<img src="' + company.logo + '" alt="' + company.name + '" class="company-logo"/>';
+        inner = '<img src="' + escapeHtml(company.logo) + '" alt="' + name + '" class="company-logo"/>';
       } else if (company.logo) {
-        inner = '<img src="' + company.logo + '" alt="' + company.name + '" class="company-logo"/>';
-        inner += '<div class="company-name">' + company.name + '</div>';
+        inner = '<img src="' + escapeHtml(company.logo) + '" alt="' + name + '" class="company-logo"/>';
+        inner += '<div class="company-name">' + name + '</div>';
       } else {
-        inner = '<div class="company-avatar" style="background:' + company.color + ';color:' + company.textColor + ';">' + company.initials + '</div>';
-        inner += '<div class="company-name">' + company.name + '</div>';
+        inner = '<div class="company-avatar" style="background:' + company.color + ';color:' + company.textColor + ';">' + escapeHtml(company.initials) + '</div>';
+        inner += '<div class="company-name">' + name + '</div>';
       }
 
       card.innerHTML = inner;
       card.addEventListener("click", function () {
-        if (company.pin) {
+        if (company.fromPortail) {
+          openCompanyForm(company);
+        } else if (company.pin) {
           openPin(company);
         } else {
           enterCompany(company);
@@ -286,17 +334,35 @@ const matchPeople = CONFIG.coworkers.filter(p => {
     showStep("choice");
   }
 
+  // Entreprise du portail : pas de liste de salariés, le visiteur prévient l'entreprise
+  function openCompanyForm(company) {
+    selectedCompany = company;
+    selectedPerson  = null;
+    selAvatar.style.background = company.logo ? "#ffffff" : company.color;
+    selAvatar.style.color      = company.textColor;
+    selAvatar.innerHTML        = company.logo
+      ? '<img src="' + escapeHtml(company.logo) + '" alt="" style="width:100%;height:100%;object-fit:contain;"/>'
+      : escapeHtml(company.initials);
+    selName.textContent        = company.name;
+    selRole.textContent        = "Entreprise";
+    resetForm();
+  }
+
+  function resetForm() {
+    visitorName.value = "";
+    visitorMsg.value  = "";
+    visitorName.classList.remove("error");
+    showStep("form");
+    visitorName.focus();
+  }
+
   function openForm(person) {
     selAvatar.style.background = person.avatarBg;
     selAvatar.style.color      = person.avatarColor;
     selAvatar.textContent      = person.initials;
     selName.textContent        = person.name;
     selRole.textContent        = person.role;
-    visitorName.value = "";
-    visitorMsg.value  = "";
-    visitorName.classList.remove("error");
-    showStep("form");
-    visitorName.focus();
+    resetForm();
   }
 
   // ── Envoi ─────────────────────────────────────────────
@@ -315,20 +381,42 @@ const matchPeople = CONFIG.coworkers.filter(p => {
       ? name + " vous attend en bas. Message : « " + visitorMsg.value.trim() + " »"
       : name + " vous attend en bas de l'immeuble.";
 
+    const recipient = selectedPerson ? selectedPerson.name : selectedCompany.name;
+    let failed = false;
     try {
-      await emailjs.send(CONFIG.emailjs.serviceId, CONFIG.emailjs.templateId, {
-        to_email: selectedPerson.contact,
-        to_name:  selectedPerson.name,
-        visitor:  name,
-        message:  message,
-      });
+      if (selectedPerson) {
+        await emailjs.send(CONFIG.emailjs.serviceId, CONFIG.emailjs.templateId, {
+          to_email: selectedPerson.contact,
+          to_name:  selectedPerson.name,
+          visitor:  name,
+          message:  message,
+        });
+      } else {
+        // Entreprise du portail : l'outil Apps Script envoie l'e-mail (adresse jamais visible ici)
+        const res = await fetch(CONFIG.portail.scriptUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" }, // évite une requête préalable (CORS)
+          body: JSON.stringify({
+            action: "notifyVisitor",
+            payload: { companyId: selectedCompany.id, visitor: name, message: visitorMsg.value.trim() },
+          }),
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message || "Envoi impossible");
+      }
     } catch (err) {
-      console.error("Erreur EmailJS :", err);
+      console.error("Erreur d'envoi :", err);
+      failed = !selectedPerson; // EmailJS : comportement d'origine, la confirmation s'affiche quand même
     }
 
-    successText.textContent = selectedPerson.name + " a été prévenu(e) de votre arrivée.";
-    if (visitorMsg.value.trim()) {
-      successText.textContent += " Votre message a bien été transmis.";
+    successTitle.textContent = failed ? "Message non envoyé" : "Message envoyé !";
+    if (failed) {
+      successText.textContent = "Nous n'avons pas pu prévenir " + recipient + ". Choisissez la case Hiptown pour appeler l'équipe.";
+    } else {
+      successText.textContent = recipient + " a été prévenu(e) de votre arrivée.";
+      if (visitorMsg.value.trim()) {
+        successText.textContent += " Votre message a bien été transmis.";
+      }
     }
     sendBtn.disabled = false;
     sendBtn.textContent = "Prévenir de mon arrivée";
@@ -346,7 +434,8 @@ const matchPeople = CONFIG.coworkers.filter(p => {
 
   // ── Écouteurs ─────────────────────────────────────────
   backBtn.addEventListener("click", function () {
-    showStep(selectedPerson && selectedPerson.phone ? "choice" : "people");
+    if (!selectedPerson) return showStep("companies");
+    showStep(selectedPerson.phone ? "choice" : "people");
   });
   backToPeople.addEventListener("click", function () { showStep("people"); });
   choiceNotify.addEventListener("click", function () { openForm(selectedPerson); });
@@ -359,5 +448,8 @@ const matchPeople = CONFIG.coworkers.filter(p => {
   // ── Init ──────────────────────────────────────────────
   buildCompanies();
   showStep("companies");
+  loadPortailCompanies().then(function () {
+    if (!companySearch.value.trim()) buildCompanies();
+  });
 
 })();
