@@ -63,6 +63,28 @@
     <div class="people-grid" id="people-grid"></div>
   </section>
 
+  <!-- ÉTAPE 2 bis : Choix (contacts avec téléphone) -->
+  <section id="step-choice" hidden>
+    <button class="back-btn" id="back-to-people">← Retour</button>
+    <div class="selected-card">
+      <div class="sel-avatar" id="choice-avatar"></div>
+      <div>
+        <div class="sel-name" id="choice-name"></div>
+        <div class="sel-role" id="choice-role"></div>
+      </div>
+    </div>
+    <div class="choice-grid">
+      <button class="choice-card" id="choice-notify">
+        <span class="choice-icon" aria-hidden="true">🔔</span>
+        <span class="choice-label">Prévenir de mon arrivée</span>
+      </button>
+      <a class="choice-card" id="choice-call" href="#">
+        <span class="choice-icon" aria-hidden="true">📞</span>
+        <span class="choice-label">Appeler</span>
+      </a>
+    </div>
+  </section>
+
   <!-- ÉTAPE 3 : Formulaire -->
   <section id="step-form" hidden>
     <button class="back-btn" id="back-btn">← Retour</button>
