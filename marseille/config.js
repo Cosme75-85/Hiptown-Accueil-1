@@ -20,8 +20,20 @@ const CONFIG = {
     scriptUrl:    "https://script.google.com/macros/s/AKfycbxQi0MRfoJZ4YVroQfKe3l6mUBKwBZH8fMlMCLQa5YavhnKiZMsn6ULtb4-DHth47GsOw/exec",
   },
 
-  // Pas de case écrite à la main ni de contact de l'équipe pour l'instant
-  companies: [],
+  // Case Hiptown, sans contact pour l'instant (ajouter les contacts dans coworkers,
+  // avec companyId: "hiptown", comme dans ../config.js)
+  companies: [
+    {
+      id:       "hiptown",
+      name:     "Hiptown",
+      featured: true,
+      pin:      null,
+      logo:     "../Logo%20Hiptown%20site.png",
+      color:    "#1e1847",
+      textColor:"#ffe700",
+      initials: "HT",
+    },
+  ],
   coworkers: [],
 
 };
