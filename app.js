@@ -149,6 +149,10 @@
     return name.trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join("") || "?";
   }
 
+  function nameKey(name) {
+    return String(name).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+
   async function loadPortailCompanies() {
     const p = CONFIG.portail;
     if (!p || !p.firestoreUrl || !p.city) return;
@@ -166,6 +170,7 @@
       if (!res.ok) throw new Error("HTTP " + res.status);
       const rows = await res.json();
       const known = new Set(CONFIG.companies.map(c => c.id));
+      const portailNames = new Set();
       rows.filter(r => r.document).forEach(function (r, i) {
         const d = r.document;
         const f = d.fields || {};
@@ -174,6 +179,7 @@
         const siteId = f.siteId && f.siteId.stringValue;
         // Page d'un site : les cases de ce site et celles de « tous les sites » de la ville
         if (!name || known.has(id) || (p.siteId && siteId && siteId !== p.siteId)) return;
+        portailNames.add(nameKey(name));
         const logo = f.logo && f.logo.stringValue;
         const colors = PALETTE[i % PALETTE.length];
         CONFIG.companies.push({
@@ -182,6 +188,8 @@
           color: colors[0], textColor: colors[1], initials: initialsOf(name),
         });
       });
+      // Une case écrite à la main est remplacée par la case du portail du même nom
+      CONFIG.companies = CONFIG.companies.filter(c => c.featured || c.fromPortail || !portailNames.has(nameKey(c.name)));
     } catch (err) {
       console.error("Entreprises du portail non chargées :", err);
     }
@@ -291,7 +299,7 @@ const matchPeople = CONFIG.coworkers.filter(p => {
   function buildPeople(list) {
     peopleGrid.innerHTML = "";
     if (list.length === 0) {
-      peopleGrid.innerHTML = '<p style="color:#94a3b8;text-align:center;grid-column:1/-1;">Aucun contact trouvé.</p>';
+      peopleGrid.innerHTML = '<p style="color:#94a3b8;text-align:center;grid-column:1/-1;">Aucun contact pour le moment.</p>';
       return;
     }
     list.forEach(function (person) {
@@ -394,9 +402,18 @@ const matchPeople = CONFIG.coworkers.filter(p => {
     const recipient = selectedPerson ? selectedPerson.name : selectedCompany.name;
     let failed = false;
     // L'outil Apps Script envoie l'e-mail : la page ne connaît que l'identifiant du destinataire
-    const payload = selectedPerson
-      ? { contactId: selectedPerson.id, visitor: name, message: visitorMsg.value.trim() }
-      : { companyId: selectedCompany.id, visitor: name, message: visitorMsg.value.trim() };
+    const message = visitorMsg.value.trim();
+    let payload;
+    if (selectedPerson && selectedPerson.id) {
+      payload = { contactId: selectedPerson.id, visitor: name, message: message };
+    } else if (selectedPerson) {
+      // Contact d'une case écrite à la main : l'équipe Hiptown de la ville est prévenue
+      const company = CONFIG.companies.find(c => c.id === selectedPerson.companyId); // aussi depuis la recherche
+      payload = { companyName: company ? company.name : "", contactName: selectedPerson.name,
+                  city: CONFIG.portail.city, visitor: name, message: message };
+    } else {
+      payload = { companyId: selectedCompany.id, visitor: name, message: message };
+    }
     try {
       const res = await fetch(CONFIG.portail.scriptUrl, {
         method: "POST",
