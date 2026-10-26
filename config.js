@@ -13,9 +13,10 @@ const CONFIG = {
   // Tous les e-mails (entreprises et case Hiptown) partent par l'outil Apps Script
   // (reservation/Accueil.gs du portail) : aucune adresse n'apparaît dans cette page.
   portail: {
-    firestoreUrl: "https://firestore.googleapis.com/v1/projects/erp-hiptown/databases/(default)/documents/accueil",
+    firestoreUrl: "https://firestore.googleapis.com/v1/projects/erp-hiptown/databases/(default)/documents",
     apiKey:       "AIzaSyAxHXtIFK5xJGIni9pDVdTZ19cryCM7IJw",
-    siteId:       "nabo06",   // NABO06 — Émergence : seules les entreprises de ce site s'affichent
+    city:         "bordeaux", // ville du portail (identifiant de PORTAIL.cities)
+    siteId:       "nabo06",   // NABO06 — Émergence : les entreprises de ce site, et celles ajoutées pour tous les sites
     scriptUrl:    "https://script.google.com/macros/s/AKfycbxQi0MRfoJZ4YVroQfKe3l6mUBKwBZH8fMlMCLQa5YavhnKiZMsn6ULtb4-DHth47GsOw/exec",
   },
 

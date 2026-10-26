@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Hiptown Marseille — Accueil visiteurs"/>
+  <title>Hiptown Marseille — Accueil</title>
+  <link rel="stylesheet" href="../style.css"/>
+</head>
+<body>
+
+<header>
+  <img src="../Logo%20Hiptown%20site.png" alt="Hiptown" class="logo"/>
+  <p>Espace de coworking Marseille — Accueil visiteurs</p>
+</header>
+
+<main class="container">
+
+  <!-- ÉTAPE 0 : PIN -->
+  <section id="step-pin" hidden>
+    <div class="pin-box">
+      <div class="pin-company-logo" id="pin-company-logo"></div>
+      <p class="pin-title">Entrez votre code d'accès</p>
+      <div class="pin-dots" id="pin-dots">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="pin-error" id="pin-error">Code incorrect, réessayez.</div>
+      <div class="pin-keypad">
+        <button class="pin-key" data-val="1">1</button>
+        <button class="pin-key" data-val="2">2</button>
+        <button class="pin-key" data-val="3">3</button>
+        <button class="pin-key" data-val="4">4</button>
+        <button class="pin-key" data-val="5">5</button>
+        <button class="pin-key" data-val="6">6</button>
+        <button class="pin-key" data-val="7">7</button>
+        <button class="pin-key" data-val="8">8</button>
+        <button class="pin-key" data-val="9">9</button>
+        <button class="pin-key pin-back" data-val="back">⌫</button>
+        <button class="pin-key" data-val="0">0</button>
+        <button class="pin-key pin-cancel" data-val="cancel">✕</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 1 : Entreprises -->
+  <section id="step-companies">
+    <p class="step-title">Quelle entreprise souhaitez-vous contacter ?</p>
+    <div class="search-wrap">
+      <input type="text" id="company-search" placeholder="🔍 Rechercher une entreprise…" autocomplete="off"/>
+    </div>
+    <div id="people-search-results" hidden>
+      <p class="search-results-title">Contacts trouvés</p>
+      <div class="people-grid" id="people-search-grid"></div>
+    </div>
+    <div class="companies-grid" id="companies-grid"></div>
+  </section>
+
+  <!-- ÉTAPE 2 : Personnes -->
+  <section id="step-people" hidden>
+    <button class="back-btn" id="back-to-companies">← Retour aux entreprises</button>
+    <p class="step-title" id="selected-company-title"></p>
+    <div class="alphabet-bar" id="alphabet-bar"></div>
+    <div class="people-grid" id="people-grid"></div>
+  </section>
+
+  <!-- ÉTAPE 2 bis : Choix (contacts avec téléphone) -->
+  <section id="step-choice" hidden>
+    <button class="back-btn" id="back-to-people">← Retour</button>
+    <div class="selected-card">
+      <div class="sel-avatar" id="choice-avatar"></div>
+      <div>
+        <div class="sel-name" id="choice-name"></div>
+        <div class="sel-role" id="choice-role"></div>
+      </div>
+    </div>
+    <div class="choice-grid">
+      <button class="choice-card" id="choice-notify">
+        <span class="choice-icon" aria-hidden="true">🔔</span>
+        <span class="choice-label">Prévenir de mon arrivée</span>
+      </button>
+      <a class="choice-card" id="choice-call" href="#">
+        <span class="choice-icon" aria-hidden="true">📞</span>
+        <span class="choice-label">Appeler</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 3 : Formulaire -->
+  <section id="step-form" hidden>
+    <button class="back-btn" id="back-btn">← Retour</button>
+    <div class="selected-card">
+      <div class="sel-avatar" id="sel-avatar"></div>
+      <div>
+        <div class="sel-name" id="sel-name"></div>
+        <div class="sel-role" id="sel-role"></div>
+      </div>
+    </div>
+    <label for="visitor-name">Votre nom <span aria-hidden="true">*</span></label>
+    <input type="text" id="visitor-name" placeholder="Ex : Marie Dupont" autocomplete="name" required/>
+    <label for="visitor-msg">Message (optionnel)</label>
+    <input type="text" id="visitor-msg" placeholder="Ex : J'ai un rendez-vous à 14h"/>
+    <button class="send-btn" id="send-btn">Prévenir de mon arrivée</button>
+  </section>
+
+  <!-- ÉTAPE 4 : Confirmation -->
+  <section id="step-success" hidden>
+    <div class="check-circle" aria-hidden="true">✓</div>
+    <h2>Message envoyé !</h2>
+    <p id="success-text"></p>
+    <button class="reset-btn" id="reset-btn">Retour à l'accueil</button>
+  </section>
+
+</main>
+
+<footer>
+  <p>Hiptown &copy; <span id="year"></span></p>
+</footer>
+
+<script src="config.js"></script>
+<script src="../app.js"></script>
+</body>
+</html>

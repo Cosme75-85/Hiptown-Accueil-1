@@ -151,18 +151,29 @@
 
   async function loadPortailCompanies() {
     const p = CONFIG.portail;
-    if (!p || !p.firestoreUrl) return;
+    if (!p || !p.firestoreUrl || !p.city) return;
     try {
-      const res = await fetch(p.firestoreUrl + "?pageSize=300&key=" + encodeURIComponent(p.apiKey));
+      // Cases de la ville (lecture publique, sans connexion)
+      const res = await fetch(p.firestoreUrl + ":runQuery?key=" + encodeURIComponent(p.apiKey), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ structuredQuery: {
+          from: [{ collectionId: "accueil" }],
+          where: { fieldFilter: { field: { fieldPath: "city" }, op: "EQUAL", value: { stringValue: p.city } } },
+          limit: 300,
+        } }),
+      });
       if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
+      const rows = await res.json();
       const known = new Set(CONFIG.companies.map(c => c.id));
-      (data.documents || []).forEach(function (d, i) {
+      rows.filter(r => r.document).forEach(function (r, i) {
+        const d = r.document;
         const f = d.fields || {};
         const id = d.name.split("/").pop();
         const name = (f.name && f.name.stringValue || "").trim();
         const siteId = f.siteId && f.siteId.stringValue;
-        if (!name || known.has(id) || (p.siteId && siteId !== p.siteId)) return;
+        // Page d'un site : les cases de ce site et celles de « tous les sites » de la ville
+        if (!name || known.has(id) || (p.siteId && siteId && siteId !== p.siteId)) return;
         const logo = f.logo && f.logo.stringValue;
         const colors = PALETTE[i % PALETTE.length];
         CONFIG.companies.push({
@@ -190,6 +201,11 @@
     const filtered = filter
       ? all.filter(c => c.name.toLowerCase().includes(filter))
       : all;
+
+    if (!filtered.length) {
+      companiesGrid.innerHTML = '<p style="color:#94a3b8;text-align:center;grid-column:1/-1;">'
+        + (filter ? "Aucune entreprise ne correspond à la recherche." : "Aucune entreprise pour le moment.") + "</p>";
+    }
 
     filtered.forEach(function (company) {
       const card = document.createElement("div");
