@@ -5,8 +5,6 @@
 (function () {
   "use strict";
 
-  emailjs.init(CONFIG.emailjs.publicKey);
-
   // ── DOM ───────────────────────────────────────────────
   const stepPin          = document.getElementById("step-pin");
   const stepCompanies    = document.getElementById("step-companies");
@@ -377,41 +375,28 @@ const matchPeople = CONFIG.coworkers.filter(p => {
     sendBtn.disabled = true;
     sendBtn.textContent = "Envoi en cours…";
 
-    const message = visitorMsg.value.trim()
-      ? name + " vous attend en bas. Message : « " + visitorMsg.value.trim() + " »"
-      : name + " vous attend en bas de l'immeuble.";
-
     const recipient = selectedPerson ? selectedPerson.name : selectedCompany.name;
     let failed = false;
+    // L'outil Apps Script envoie l'e-mail : la page ne connaît que l'identifiant du destinataire
+    const payload = selectedPerson
+      ? { contactId: selectedPerson.id, visitor: name, message: visitorMsg.value.trim() }
+      : { companyId: selectedCompany.id, visitor: name, message: visitorMsg.value.trim() };
     try {
-      if (selectedPerson) {
-        await emailjs.send(CONFIG.emailjs.serviceId, CONFIG.emailjs.templateId, {
-          to_email: selectedPerson.contact,
-          to_name:  selectedPerson.name,
-          visitor:  name,
-          message:  message,
-        });
-      } else {
-        // Entreprise du portail : l'outil Apps Script envoie l'e-mail (adresse jamais visible ici)
-        const res = await fetch(CONFIG.portail.scriptUrl, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" }, // évite une requête préalable (CORS)
-          body: JSON.stringify({
-            action: "notifyVisitor",
-            payload: { companyId: selectedCompany.id, visitor: name, message: visitorMsg.value.trim() },
-          }),
-        });
-        const result = await res.json();
-        if (!result.success) throw new Error(result.message || "Envoi impossible");
-      }
+      const res = await fetch(CONFIG.portail.scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" }, // évite une requête préalable (CORS)
+        body: JSON.stringify({ action: "notifyVisitor", payload: payload }),
+      });
+      const result = await res.json();
+      if (!result.success) throw new Error(result.message || "Envoi impossible");
     } catch (err) {
       console.error("Erreur d'envoi :", err);
-      failed = !selectedPerson; // EmailJS : comportement d'origine, la confirmation s'affiche quand même
+      failed = true;
     }
 
     successTitle.textContent = failed ? "Message non envoyé" : "Message envoyé !";
     if (failed) {
-      successText.textContent = "Nous n'avons pas pu prévenir " + recipient + ". Choisissez la case Hiptown pour appeler l'équipe.";
+      successText.textContent = "Nous n'avons pas pu prévenir " + recipient + ". Choisissez la case Hiptown puis « Appeler » pour joindre l'équipe.";
     } else {
       successText.textContent = recipient + " a été prévenu(e) de votre arrivée.";
       if (visitorMsg.value.trim()) {
