@@ -77,9 +77,9 @@
 
     // Affiche le logo ou les initiales de l'entreprise
     if (company.logo) {
-      pinCompanyLogo.innerHTML = '<img src="' + company.logo + '" alt="' + company.name + '" style="height:56px;object-fit:contain;"/>';
+      pinCompanyLogo.innerHTML = '<img src="' + escapeHtml(company.logo) + '" alt="' + escapeHtml(company.name) + '" style="height:56px;object-fit:contain;"/>';
     } else {
-      pinCompanyLogo.innerHTML = '<div style="width:64px;height:64px;border-radius:12px;background:' + company.color + ';color:' + company.textColor + ';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto;">' + company.initials + '</div>';
+      pinCompanyLogo.innerHTML = '<div style="width:64px;height:64px;border-radius:12px;background:' + company.color + ';color:' + company.textColor + ';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto;">' + escapeHtml(company.initials) + '</div>';
     }
 
     showStep("pin");
@@ -181,15 +181,33 @@
         if (!name || known.has(id) || (p.siteId && siteId && siteId !== p.siteId)) return;
         portailNames.add(nameKey(name));
         const logo = f.logo && f.logo.stringValue;
+        const pin = f.pin && f.pin.stringValue;
         const colors = PALETTE[i % PALETTE.length];
+        // Personnes de la case : le visiteur choisit celle qu'il vient voir
+        const people = ((f.people && f.people.arrayValue && f.people.arrayValue.values) || [])
+          .map(v => (v.mapValue && v.mapValue.fields) || {})
+          .map(pf => ({
+            personId: pf.id && pf.id.stringValue,
+            name: ((pf.name && pf.name.stringValue) || "").trim(),
+            role: ((pf.role && pf.role.stringValue) || "").trim(),
+          }))
+          .filter(p => p.personId && p.name);
         CONFIG.companies.push({
-          id: id, name: name, featured: false, pin: null, fromPortail: true,
+          id: id, name: name, featured: false, pin: /^[0-9]{4}$/.test(pin || "") ? pin : null, fromPortail: true,
+          hasPeople: people.length > 0,
           logo: SAFE_LOGO.test(logo || "") ? logo : "",
           color: colors[0], textColor: colors[1], initials: initialsOf(name),
         });
+        people.forEach(p => CONFIG.coworkers.push({
+          personId: p.personId, name: p.name, role: p.role || name, companyId: id,
+          initials: initialsOf(p.name), avatarBg: colors[0], avatarColor: colors[1],
+        }));
       });
-      // Une case écrite à la main est remplacée par la case du portail du même nom
-      CONFIG.companies = CONFIG.companies.filter(c => c.featured || c.fromPortail || !portailNames.has(nameKey(c.name)));
+      // Une case écrite à la main est remplacée par la case du portail du même nom (avec ses contacts)
+      const replaced = new Set(CONFIG.companies
+        .filter(c => !c.featured && !c.fromPortail && portailNames.has(nameKey(c.name))).map(c => c.id));
+      CONFIG.companies = CONFIG.companies.filter(c => !replaced.has(c.id));
+      CONFIG.coworkers = CONFIG.coworkers.filter(p => !replaced.has(p.companyId));
     } catch (err) {
       console.error("Entreprises du portail non chargées :", err);
     }
@@ -234,7 +252,7 @@
 
       card.innerHTML = inner;
       card.addEventListener("click", function () {
-        if (company.fromPortail) {
+        if (company.fromPortail && !company.hasPeople) {
           openCompanyForm(company);
         } else if (company.pin) {
           openPin(company);
@@ -280,11 +298,7 @@ const matchPeople = CONFIG.coworkers.filter(p => {
       matchPeople.forEach(function (person) {
         const card = document.createElement("div");
         card.className = "person-card";
-        card.innerHTML =
-          '<div class="p-avatar" style="background:' + person.avatarBg +
-          ';color:' + person.avatarColor + ';">' + person.initials + '</div>' +
-          '<div class="p-name">' + person.name + '</div>' +
-          '<div class="p-role">' + person.role + '</div>';
+        card.innerHTML = personHtml(person);
         card.addEventListener("click", function () { selectPerson(person); });
         peopleSearchGrid.appendChild(card);
       });
@@ -296,6 +310,13 @@ const matchPeople = CONFIG.coworkers.filter(p => {
   });
 
   // ── ÉTAPE 2 : Personnes ───────────────────────────────
+  function personHtml(person) {
+    return '<div class="p-avatar" style="background:' + person.avatarBg +
+      ';color:' + person.avatarColor + ';">' + escapeHtml(person.initials) + '</div>' +
+      '<div class="p-name">' + escapeHtml(person.name) + '</div>' +
+      '<div class="p-role">' + escapeHtml(person.role) + '</div>';
+  }
+
   function buildPeople(list) {
     peopleGrid.innerHTML = "";
     if (list.length === 0) {
@@ -306,11 +327,7 @@ const matchPeople = CONFIG.coworkers.filter(p => {
       const card = document.createElement("div");
       card.className = "person-card";
       card.setAttribute("data-name", person.name);
-      card.innerHTML =
-        '<div class="p-avatar" style="background:' + person.avatarBg +
-        ';color:' + person.avatarColor + ';">' + person.initials + '</div>' +
-        '<div class="p-name">' + person.name + '</div>' +
-        '<div class="p-role">' + person.role + '</div>';
+      card.innerHTML = personHtml(person);
       card.addEventListener("click", function () { selectPerson(person); });
       peopleGrid.appendChild(card);
     });
@@ -404,7 +421,10 @@ const matchPeople = CONFIG.coworkers.filter(p => {
     // L'outil Apps Script envoie l'e-mail : la page ne connaît que l'identifiant du destinataire
     const message = visitorMsg.value.trim();
     let payload;
-    if (selectedPerson && selectedPerson.id) {
+    if (selectedPerson && selectedPerson.personId) {
+      // Personne d'une case du portail : son e-mail, sinon celui de l'entreprise (Accueil.gs)
+      payload = { companyId: selectedPerson.companyId, personId: selectedPerson.personId, visitor: name, message: message };
+    } else if (selectedPerson && selectedPerson.id) {
       payload = { contactId: selectedPerson.id, visitor: name, message: message };
     } else if (selectedPerson) {
       // Contact d'une case écrite à la main : l'équipe Hiptown de la ville est prévenue
