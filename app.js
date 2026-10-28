@@ -179,6 +179,11 @@
         const siteId = f.siteId && f.siteId.stringValue;
         // Page d'un site : les cases de ce site et celles de « tous les sites » de la ville
         if (!name || known.has(id) || (p.siteId && siteId && siteId !== p.siteId)) return;
+        // Entreprise du portail : seulement si elle a choisi d'apparaître (Mon profil) ; une case
+        // ajoutée à la main par l'équipe apparaît toujours
+        const manual = f.manual && f.manual.booleanValue === true;
+        const visible = f.visible && f.visible.booleanValue === true;
+        if (!manual && !visible) return;
         portailNames.add(nameKey(name));
         const logo = f.logo && f.logo.stringValue;
         const pin = f.pin && f.pin.stringValue;
