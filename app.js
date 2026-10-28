@@ -56,6 +56,7 @@
   let currentPeople     = [];
   let pinTarget         = null;
   let pinCurrent        = "";
+  let accessCode        = "";   // code d'accès tapé pour la case en cours (envoyé à Apps Script)
 
   // ── Étapes ────────────────────────────────────────────
   function showStep(step) {
@@ -77,9 +78,9 @@
 
     // Affiche le logo ou les initiales de l'entreprise
     if (company.logo) {
-      pinCompanyLogo.innerHTML = '<img src="' + company.logo + '" alt="' + company.name + '" style="height:56px;object-fit:contain;"/>';
+      pinCompanyLogo.innerHTML = '<img src="' + escapeHtml(company.logo) + '" alt="' + escapeHtml(company.name) + '" style="height:56px;object-fit:contain;"/>';
     } else {
-      pinCompanyLogo.innerHTML = '<div style="width:64px;height:64px;border-radius:12px;background:' + company.color + ';color:' + company.textColor + ';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto;">' + company.initials + '</div>';
+      pinCompanyLogo.innerHTML = '<div style="width:64px;height:64px;border-radius:12px;background:' + company.color + ';color:' + company.textColor + ';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;margin:0 auto;">' + escapeHtml(company.initials) + '</div>';
     }
 
     showStep("pin");
@@ -114,25 +115,46 @@
       updatePinDots();
 
       if (pinCurrent.length === 4) {
-        if (pinCurrent === pinTarget.pin) {
-          // PIN correct
-          setTimeout(function () {
-            enterCompany(pinTarget);
-          }, 200);
-        } else {
-          // PIN incorrect
-          pinError.hidden = false;
-          setTimeout(function () {
-            pinCurrent = "";
-            pinError.hidden = true;
-            updatePinDots();
-          }, 1000);
-        }
+        const target = pinTarget;
+        const code = pinCurrent;
+        checkPin(target, code).then(function (ok) {
+          if (pinTarget !== target) return; // le visiteur a annulé entre-temps
+          if (ok) {
+            accessCode = code;
+            setTimeout(function () { openCompany(target); }, 200);
+          } else {
+            pinError.hidden = false;
+            setTimeout(function () {
+              pinCurrent = "";
+              pinError.hidden = true;
+              updatePinDots();
+            }, 1000);
+          }
+        });
       }
     });
   });
 
-  // ── Entreprises du portail Hiptown (Firestore, collection « accueil ») ──
+  /**
+   * Code d'accès : celui d'une case écrite dans config.js est comparé ici ; celui d'une case du
+   * portail n'est jamais dans la page, c'est Apps Script qui le vérifie.
+   */
+  async function checkPin(company, code) {
+    if (company.pin) return code === company.pin;
+    try {
+      const res = await fetch(CONFIG.portail.scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "checkAccueilPin", payload: { companyId: company.id, pin: code } }),
+      });
+      return (await res.json()).success === true;
+    } catch (err) {
+      console.error("Code non vérifié :", err);
+      return false;
+    }
+  }
+
+  // ── Entreprises du portail Hiptown (Firestore, collections « accueil » et « accueilPeople ») ──
   const SAFE_LOGO = /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/;
   const PALETTE = [
     ["#e0f2fe", "#0369a1"], ["#fef3c7", "#92400e"], ["#dcfce7", "#166534"],
@@ -149,28 +171,38 @@
     return name.trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join("") || "?";
   }
 
-  function nameKey(name) {
-    return String(name).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  /** Documents d'une collection du portail pour la ville de la page. */
+  async function runQuery(p, collectionId) {
+    const res = await fetch(p.firestoreUrl + ":runQuery?key=" + encodeURIComponent(p.apiKey), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ structuredQuery: {
+        from: [{ collectionId: collectionId }],
+        where: { fieldFilter: { field: { fieldPath: "city" }, op: "EQUAL", value: { stringValue: p.city } } },
+        limit: 500,
+      } }),
+    });
+    if (!res.ok) throw new Error(collectionId + " : HTTP " + res.status);
+    return res.json();
   }
 
   async function loadPortailCompanies() {
     const p = CONFIG.portail;
     if (!p || !p.firestoreUrl || !p.city) return;
     try {
-      // Cases de la ville (lecture publique, sans connexion)
-      const res = await fetch(p.firestoreUrl + ":runQuery?key=" + encodeURIComponent(p.apiKey), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ structuredQuery: {
-          from: [{ collectionId: "accueil" }],
-          where: { fieldFilter: { field: { fieldPath: "city" }, op: "EQUAL", value: { stringValue: p.city } } },
-          limit: 300,
-        } }),
+      // Cases de la ville, et collaborateurs qui ont choisi d'apparaître (lecture publique, sans connexion)
+      const [rows, peopleRows] = await Promise.all([runQuery(p, "accueil"), runQuery(p, "accueilPeople")]);
+      const members = {};
+      peopleRows.filter(r => r.document).forEach(function (r) {
+        const f = r.document.fields || {};
+        const companyId = f.companyId && f.companyId.stringValue;
+        const name = ((f.name && f.name.stringValue) || "").trim();
+        if (!companyId || !name) return;
+        (members[companyId] = members[companyId] || []).push({
+          personId: r.document.name.split("/").pop(), name: name, role: ((f.role && f.role.stringValue) || "").trim(),
+        });
       });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const rows = await res.json();
       const known = new Set(CONFIG.companies.map(c => c.id));
-      const portailNames = new Set();
       rows.filter(r => r.document).forEach(function (r, i) {
         const d = r.document;
         const f = d.fields || {};
@@ -179,17 +211,36 @@
         const siteId = f.siteId && f.siteId.stringValue;
         // Page d'un site : les cases de ce site et celles de « tous les sites » de la ville
         if (!name || known.has(id) || (p.siteId && siteId && siteId !== p.siteId)) return;
-        portailNames.add(nameKey(name));
+        // Entreprise du portail : seulement si elle a choisi d'apparaître (Mon profil) ; une case
+        // ajoutée à la main par l'équipe apparaît toujours
+        const manual = f.manual && f.manual.booleanValue === true;
+        const visible = f.visible && f.visible.booleanValue === true;
+        if (!manual && !visible) return;
         const logo = f.logo && f.logo.stringValue;
         const colors = PALETTE[i % PALETTE.length];
+        // Personnes de la case : celles de l'équipe (case à la main) ou les collaborateurs affichés
+        const people = manual
+          ? ((f.people && f.people.arrayValue && f.people.arrayValue.values) || [])
+              .map(v => (v.mapValue && v.mapValue.fields) || {})
+              .map(pf => ({
+                personId: pf.id && pf.id.stringValue,
+                name: ((pf.name && pf.name.stringValue) || "").trim(),
+                role: ((pf.role && pf.role.stringValue) || "").trim(),
+              }))
+              .filter(p => p.personId && p.name)
+          : (members[id] || []);
         CONFIG.companies.push({
           id: id, name: name, featured: false, pin: null, fromPortail: true,
+          locked: f.locked && f.locked.booleanValue === true, // code d'accès vérifié par Apps Script
+          hasPeople: people.length > 0,
           logo: SAFE_LOGO.test(logo || "") ? logo : "",
           color: colors[0], textColor: colors[1], initials: initialsOf(name),
         });
+        people.forEach(p => CONFIG.coworkers.push({
+          personId: p.personId, name: p.name, role: p.role || name, companyId: id,
+          initials: initialsOf(p.name), avatarBg: colors[0], avatarColor: colors[1],
+        }));
       });
-      // Une case écrite à la main est remplacée par la case du portail du même nom
-      CONFIG.companies = CONFIG.companies.filter(c => c.featured || c.fromPortail || !portailNames.has(nameKey(c.name)));
     } catch (err) {
       console.error("Entreprises du portail non chargées :", err);
     }
@@ -234,16 +285,21 @@
 
       card.innerHTML = inner;
       card.addEventListener("click", function () {
-        if (company.fromPortail) {
-          openCompanyForm(company);
-        } else if (company.pin) {
+        accessCode = "";
+        if (company.pin || company.locked) {
           openPin(company);
         } else {
-          enterCompany(company);
+          openCompany(company);
         }
       });
       companiesGrid.appendChild(card);
     });
+  }
+
+  /** Après le code d'accès s'il y en a un : liste des personnes, ou directement le formulaire. */
+  function openCompany(company) {
+    if (company.fromPortail && !company.hasPeople) openCompanyForm(company);
+    else enterCompany(company);
   }
 
   function enterCompany(company) {
@@ -271,7 +327,7 @@
 
 const matchPeople = CONFIG.coworkers.filter(p => {
   const company = CONFIG.companies.find(c => c.id === p.companyId);
-  return p.name.toLowerCase().includes(q) && (!company || !company.pin);
+  return p.name.toLowerCase().includes(q) && (!company || (!company.pin && !company.locked));
 });
 
     if (matchPeople.length > 0) {
@@ -280,11 +336,7 @@ const matchPeople = CONFIG.coworkers.filter(p => {
       matchPeople.forEach(function (person) {
         const card = document.createElement("div");
         card.className = "person-card";
-        card.innerHTML =
-          '<div class="p-avatar" style="background:' + person.avatarBg +
-          ';color:' + person.avatarColor + ';">' + person.initials + '</div>' +
-          '<div class="p-name">' + person.name + '</div>' +
-          '<div class="p-role">' + person.role + '</div>';
+        card.innerHTML = personHtml(person);
         card.addEventListener("click", function () { selectPerson(person); });
         peopleSearchGrid.appendChild(card);
       });
@@ -296,6 +348,13 @@ const matchPeople = CONFIG.coworkers.filter(p => {
   });
 
   // ── ÉTAPE 2 : Personnes ───────────────────────────────
+  function personHtml(person) {
+    return '<div class="p-avatar" style="background:' + person.avatarBg +
+      ';color:' + person.avatarColor + ';">' + escapeHtml(person.initials) + '</div>' +
+      '<div class="p-name">' + escapeHtml(person.name) + '</div>' +
+      '<div class="p-role">' + escapeHtml(person.role) + '</div>';
+  }
+
   function buildPeople(list) {
     peopleGrid.innerHTML = "";
     if (list.length === 0) {
@@ -306,11 +365,7 @@ const matchPeople = CONFIG.coworkers.filter(p => {
       const card = document.createElement("div");
       card.className = "person-card";
       card.setAttribute("data-name", person.name);
-      card.innerHTML =
-        '<div class="p-avatar" style="background:' + person.avatarBg +
-        ';color:' + person.avatarColor + ';">' + person.initials + '</div>' +
-        '<div class="p-name">' + person.name + '</div>' +
-        '<div class="p-role">' + person.role + '</div>';
+      card.innerHTML = personHtml(person);
       card.addEventListener("click", function () { selectPerson(person); });
       peopleGrid.appendChild(card);
     });
@@ -404,15 +459,13 @@ const matchPeople = CONFIG.coworkers.filter(p => {
     // L'outil Apps Script envoie l'e-mail : la page ne connaît que l'identifiant du destinataire
     const message = visitorMsg.value.trim();
     let payload;
-    if (selectedPerson && selectedPerson.id) {
+    if (selectedPerson && selectedPerson.personId) {
+      // Personne d'une case du portail : son e-mail, sinon celui de l'entreprise (Accueil.gs)
+      payload = { companyId: selectedPerson.companyId, personId: selectedPerson.personId, pin: accessCode, visitor: name, message: message };
+    } else if (selectedPerson && selectedPerson.id) {
       payload = { contactId: selectedPerson.id, visitor: name, message: message };
-    } else if (selectedPerson) {
-      // Contact d'une case écrite à la main : l'équipe Hiptown de la ville est prévenue
-      const company = CONFIG.companies.find(c => c.id === selectedPerson.companyId); // aussi depuis la recherche
-      payload = { companyName: company ? company.name : "", contactName: selectedPerson.name,
-                  city: CONFIG.portail.city, visitor: name, message: message };
     } else {
-      payload = { companyId: selectedCompany.id, visitor: name, message: message };
+      payload = { companyId: selectedCompany.id, pin: accessCode, visitor: name, message: message };
     }
     try {
       const res = await fetch(CONFIG.portail.scriptUrl, {
@@ -442,6 +495,7 @@ const matchPeople = CONFIG.coworkers.filter(p => {
   }
 
   function reset() {
+    accessCode      = "";
     selectedPerson  = null;
     selectedCompany = null;
     companySearch.value = "";
