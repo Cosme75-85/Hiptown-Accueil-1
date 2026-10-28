@@ -117,18 +117,21 @@
       if (pinCurrent.length === 4) {
         const target = pinTarget;
         const code = pinCurrent;
-        checkPin(target, code).then(function (ok) {
+        checkPin(target, code).then(function (status) {
           if (pinTarget !== target) return; // le visiteur a annulé entre-temps
-          if (ok) {
+          if (status === "ok") {
             accessCode = code;
             setTimeout(function () { openCompany(target); }, 200);
           } else {
+            pinError.textContent = status === "wrong"
+              ? "Code incorrect, réessayez."
+              : "Vérification impossible pour le moment. Choisissez la case Hiptown pour joindre l'équipe.";
             pinError.hidden = false;
             setTimeout(function () {
               pinCurrent = "";
               pinError.hidden = true;
               updatePinDots();
-            }, 1000);
+            }, status === "wrong" ? 1000 : 4000);
           }
         });
       }
@@ -140,21 +143,25 @@
    * portail n'est jamais dans la page, c'est Apps Script qui le vérifie.
    */
   async function checkPin(company, code) {
-    if (company.pin) return code === company.pin;
+    if (company.pin) return code === company.pin ? "ok" : "wrong";
     try {
       const res = await fetch(CONFIG.portail.scriptUrl, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "checkAccueilPin", payload: { companyId: company.id, pin: code } }),
       });
-      return (await res.json()).success === true;
+      const result = await res.json();
+      if (result.success === true) return "ok";
+      if (result.message === "Code d'accès incorrect.") return "wrong";
+      console.error("Code non vérifié :", result.message);
+      return "error";
     } catch (err) {
       console.error("Code non vérifié :", err);
-      return false;
+      return "error";
     }
   }
 
-  // ── Entreprises du portail Hiptown (Firestore, collections « accueil » et « accueilPeople ») ──
+  // ── Entreprises du portail Hiptown (Firestore, collection « accueil ») ──
   const SAFE_LOGO = /^data:image\/(jpeg|png);base64,[A-Za-z0-9+/=]+$/;
   const PALETTE = [
     ["#e0f2fe", "#0369a1"], ["#fef3c7", "#92400e"], ["#dcfce7", "#166534"],
@@ -190,18 +197,8 @@
     const p = CONFIG.portail;
     if (!p || !p.firestoreUrl || !p.city) return;
     try {
-      // Cases de la ville, et collaborateurs qui ont choisi d'apparaître (lecture publique, sans connexion)
-      const [rows, peopleRows] = await Promise.all([runQuery(p, "accueil"), runQuery(p, "accueilPeople")]);
-      const members = {};
-      peopleRows.filter(r => r.document).forEach(function (r) {
-        const f = r.document.fields || {};
-        const companyId = f.companyId && f.companyId.stringValue;
-        const name = ((f.name && f.name.stringValue) || "").trim();
-        if (!companyId || !name) return;
-        (members[companyId] = members[companyId] || []).push({
-          personId: r.document.name.split("/").pop(), name: name, role: ((f.role && f.role.stringValue) || "").trim(),
-        });
-      });
+      // Cases de la ville (lecture publique, sans connexion)
+      const rows = await runQuery(p, "accueil");
       const known = new Set(CONFIG.companies.map(c => c.id));
       rows.filter(r => r.document).forEach(function (r, i) {
         const d = r.document;
@@ -218,17 +215,15 @@
         if (!manual && !visible) return;
         const logo = f.logo && f.logo.stringValue;
         const colors = PALETTE[i % PALETTE.length];
-        // Personnes de la case : celles de l'équipe (case à la main) ou les collaborateurs affichés
-        const people = manual
-          ? ((f.people && f.people.arrayValue && f.people.arrayValue.values) || [])
-              .map(v => (v.mapValue && v.mapValue.fields) || {})
-              .map(pf => ({
-                personId: pf.id && pf.id.stringValue,
-                name: ((pf.name && pf.name.stringValue) || "").trim(),
-                role: ((pf.role && pf.role.stringValue) || "").trim(),
-              }))
-              .filter(p => p.personId && p.name)
-          : (members[id] || []);
+        // Personnes de la case, choisies par l'entreprise (Mon profil) ou par l'équipe
+        const people = ((f.people && f.people.arrayValue && f.people.arrayValue.values) || [])
+          .map(v => (v.mapValue && v.mapValue.fields) || {})
+          .map(pf => ({
+            personId: pf.id && pf.id.stringValue,
+            name: ((pf.name && pf.name.stringValue) || "").trim(),
+            role: ((pf.role && pf.role.stringValue) || "").trim(),
+          }))
+          .filter(p => p.personId && p.name);
         CONFIG.companies.push({
           id: id, name: name, featured: false, pin: null, fromPortail: true,
           locked: f.locked && f.locked.booleanValue === true, // code d'accès vérifié par Apps Script
