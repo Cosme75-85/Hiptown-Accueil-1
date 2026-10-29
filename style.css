@@ -60,10 +60,27 @@ header p {
   font-size: 13px;
 }
 
-header p.address {
-  color: var(--yellow);
-  margin-top: 4px;
+/* Adresse : bouton qui ouvre l'itinéraire (Plans sur iPhone/iPad/Mac, Google Maps ailleurs, voir app.js) */
+header a.address {
+  display: inline-flex; align-items: center; gap: 10px;
+  margin-top: 10px; padding: 8px 14px 8px 8px;
+  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 231, 0, 0.35);
+  border-radius: 999px; color: #fff; text-decoration: none; text-align: left;
+  transition: background .2s, border-color .2s;
 }
+header a.address:hover, header a.address:focus-visible { background: rgba(255, 255, 255, 0.14); border-color: var(--yellow); }
+.address-pin {
+  flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--yellow); display: flex; align-items: center; justify-content: center; font-size: 17px;
+}
+.address-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.address-text b { color: var(--yellow); font-size: 14px; }
+.address-text span { color: rgba(255, 255, 255, 0.8); font-size: 12.5px; }
+.address-go {
+  flex-shrink: 0; margin-left: 4px; padding: 5px 10px; border-radius: 999px;
+  background: var(--yellow); color: var(--navy); font-size: 12px; font-weight: 700;
+}
+@media (max-width: 420px) { .address-go { display: none; } }
 
 /* ═══════════════════════════
    CONTAINER
