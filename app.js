@@ -2,6 +2,14 @@
 //  HIPTOWN — ACCUEIL VISITEURS — app.js v4
 // ═══════════════════════════════════════════════════════
 
+// Adresse de l'en-tête : Plans d'Apple sur iPhone, iPad et Mac, Google Maps ailleurs
+(function () {
+  const link = document.getElementById("address-link");
+  if (link && /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)) {
+    link.href = "https://maps.apple.com/?q=" + encodeURIComponent(link.dataset.query);
+  }
+})();
+
 (function () {
   "use strict";
 
