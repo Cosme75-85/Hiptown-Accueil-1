@@ -20,8 +20,7 @@ const CONFIG = {
     scriptUrl:    "https://script.google.com/macros/s/AKfycbxQi0MRfoJZ4YVroQfKe3l6mUBKwBZH8fMlMCLQa5YavhnKiZMsn6ULtb4-DHth47GsOw/exec",
   },
 
-  // Case Hiptown, sans contact pour l'instant (ajouter les contacts dans coworkers,
-  // avec companyId: "hiptown", comme dans ../config.js)
+  // Case Hiptown et ses contacts (companyId: "hiptown" ; id connu d'Apps Script, ACCUEIL_TEAM_CONTACTS dans Accueil.gs)
   companies: [
     {
       id:       "hiptown",
@@ -34,6 +33,16 @@ const CONFIG = {
       initials: "HT",
     },
   ],
-  coworkers: [],
+  coworkers: [
+    {
+      id:          "benedicte",   // identifiant connu d'Apps Script (ACCUEIL_TEAM_CONTACTS dans Accueil.gs)
+      name:        "Bénédicte Yeznikian",
+      role:        "Équipe Hiptown Marseille",
+      initials:    "BY",
+      avatarBg:    "#1e1847",
+      avatarColor: "#ffe700",
+      companyId:   "hiptown",
+    },
+  ],
 
 };
