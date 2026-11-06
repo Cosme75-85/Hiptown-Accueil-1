@@ -42,6 +42,7 @@
   const choiceRole   = document.getElementById("choice-role");
   const choiceNotify = document.getElementById("choice-notify");
   const choiceCall   = document.getElementById("choice-call");
+  const choiceMessage = document.getElementById("choice-message");
 
   const backBtn     = document.getElementById("back-btn");
   const sendBtn     = document.getElementById("send-btn");
@@ -65,6 +66,8 @@
   let pinTarget         = null;
   let pinCurrent        = "";
   let accessCode        = "";   // code d'accès tapé pour la case en cours (envoyé à Apps Script)
+  let pinForCall        = null; // contact à appeler : le code tapé sert à obtenir son numéro
+  let revealedPhone     = "";   // numéro obtenu avec le code, pour le contact affiché
 
   // ── Étapes ────────────────────────────────────────────
   function showStep(step) {
@@ -107,7 +110,12 @@
       if (val === "cancel") {
         pinCurrent = "";
         pinTarget  = null;
-        showStep("companies");
+        if (pinForCall) {
+          pinForCall = null;
+          showStep("choice");
+        } else {
+          showStep("companies");
+        }
         return;
       }
 
@@ -125,11 +133,22 @@
       if (pinCurrent.length === 4) {
         const target = pinTarget;
         const code = pinCurrent;
-        checkPin(target, code).then(function (status) {
-          if (pinTarget !== target) return; // le visiteur a annulé entre-temps
+        const callee = pinForCall;
+        const check = callee ? revealPhone(callee, code) : checkPin(target, code);
+        check.then(function (status) {
+          if (pinTarget !== target || pinForCall !== callee) return; // le visiteur a annulé entre-temps
           if (status === "ok") {
             accessCode = code;
-            setTimeout(function () { openCompany(target); }, 200);
+            if (callee) {
+              pinForCall = null;
+              setTimeout(function () { showCall(callee); }, 200);
+            } else {
+              setTimeout(function () { openCompany(target); }, 200);
+            }
+          } else if (status === "nophone") {
+            pinForCall = null;
+            showChoiceMessage("Pas de numéro pour ce contact. Choisissez « Prévenir de mon arrivée ».");
+            showStep("choice");
           } else {
             pinError.textContent = status === "wrong"
               ? "Code incorrect, réessayez."
@@ -165,6 +184,35 @@
       return "error";
     } catch (err) {
       console.error("Code non vérifié :", err);
+      return "error";
+    }
+  }
+
+  /**
+   * Numéro d'un contact d'une case du portail : jamais dans la page, Apps Script ne le donne
+   * qu'avec le bon code d'accès de l'entreprise. "ok" (numéro dans revealedPhone), "wrong",
+   * "nophone" ou "error".
+   */
+  async function revealPhone(person, code) {
+    try {
+      const payload = { companyId: person.companyId, pin: code };
+      if (person.personId) payload.personId = person.personId;
+      const res = await fetch(CONFIG.portail.scriptUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "revealAccueilPhone", payload: payload }),
+      });
+      const result = await res.json();
+      if (result.success === true && /^\+?[0-9]{6,15}$/.test(result.phone || "")) {
+        revealedPhone = result.phone;
+        return "ok";
+      }
+      if (result.message === "Code d'accès incorrect.") return "wrong";
+      if (result.message === "Pas de numéro pour ce contact.") return "nophone";
+      console.error("Numéro non obtenu :", result.message);
+      return "error";
+    } catch (err) {
+      console.error("Numéro non obtenu :", err);
       return "error";
     }
   }
@@ -230,17 +278,22 @@
             personId: pf.id && pf.id.stringValue,
             name: ((pf.name && pf.name.stringValue) || "").trim(),
             role: ((pf.role && pf.role.stringValue) || "").trim(),
+            hasPhone: pf.hasPhone && pf.hasPhone.booleanValue === true,
           }))
           .filter(p => p.personId && p.name);
         CONFIG.companies.push({
           id: id, name: name, featured: false, pin: null, fromPortail: true,
           locked: f.locked && f.locked.booleanValue === true, // code d'accès vérifié par Apps Script
           hasPeople: people.length > 0,
+          // Case « Contacter <entreprise> » avant les personnes (e-mail de l'entreprise, et son
+          // numéro donné avec le code d'accès)
+          general: f.general && f.general.booleanValue === true,
+          generalPhone: f.generalPhone && f.generalPhone.booleanValue === true,
           logo: SAFE_LOGO.test(logo || "") ? logo : "",
           color: colors[0], textColor: colors[1], initials: initialsOf(name),
         });
         people.forEach(p => CONFIG.coworkers.push({
-          personId: p.personId, name: p.name, role: p.role || name, companyId: id,
+          personId: p.personId, name: p.name, role: p.role || name, companyId: id, hasPhone: p.hasPhone,
           initials: initialsOf(p.name), avatarBg: colors[0], avatarColor: colors[1],
         }));
       });
@@ -289,6 +342,7 @@
       card.innerHTML = inner;
       card.addEventListener("click", function () {
         accessCode = "";
+        pinForCall = null;
         if (company.pin || company.locked) {
           openPin(company);
         } else {
@@ -301,8 +355,17 @@
 
   /** Après le code d'accès s'il y en a un : liste des personnes, ou directement le formulaire. */
   function openCompany(company) {
-    if (company.fromPortail && !company.hasPeople) openCompanyForm(company);
+    if (company.fromPortail && !company.hasPeople && !company.general) openCompanyForm(company);
     else enterCompany(company);
+  }
+
+  /** Case « Contacter <entreprise> » : l'entreprise entière, en tête de ses personnes. */
+  function generalContactOf(company) {
+    return {
+      general: true, companyId: company.id, name: company.name, role: "Contacter l'entreprise",
+      hasPhone: company.generalPhone === true, logo: company.logo,
+      initials: company.initials, avatarBg: company.color, avatarColor: company.textColor,
+    };
   }
 
   function enterCompany(company) {
@@ -313,7 +376,7 @@
       .filter(p => p.companyId === company.id)
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    buildPeople(currentPeople);
+    buildPeople(company.general ? [generalContactOf(company)].concat(currentPeople) : currentPeople);
     buildAlphabet(currentPeople);
     showStep("people");
   }
@@ -352,10 +415,37 @@ const matchPeople = CONFIG.coworkers.filter(p => {
 
   // ── ÉTAPE 2 : Personnes ───────────────────────────────
   function personHtml(person) {
-    return '<div class="p-avatar" style="background:' + person.avatarBg +
-      ';color:' + person.avatarColor + ';">' + escapeHtml(person.initials) + '</div>' +
+    if (person.general) {
+      return avatarHtml(person, "p-avatar") +
+        '<div class="p-name">Contacter ' + escapeHtml(person.name) + '</div>' +
+        '<div class="p-role">Toute l\'entreprise</div>';
+    }
+    return avatarHtml(person, "p-avatar") +
       '<div class="p-name">' + escapeHtml(person.name) + '</div>' +
       '<div class="p-role">' + escapeHtml(person.role) + '</div>';
+  }
+
+  /** Initiales sur fond de couleur, ou logo de l'entreprise pour la case « Contacter <entreprise> ». */
+  function avatarHtml(person, className) {
+    if (person.general && person.logo) {
+      return '<div class="' + className + '" style="background:#ffffff;"><img src="' + escapeHtml(person.logo) +
+        '" alt="" style="width:100%;height:100%;object-fit:contain;"/></div>';
+    }
+    return '<div class="' + className + '" style="background:' + person.avatarBg +
+      ';color:' + person.avatarColor + ';">' + escapeHtml(person.initials) + '</div>';
+  }
+
+  function setAvatar(el, person) {
+    const general = person.general && person.logo;
+    el.style.background = general ? "#ffffff" : person.avatarBg;
+    el.style.color      = person.avatarColor;
+    el.innerHTML        = general
+      ? '<img src="' + escapeHtml(person.logo) + '" alt="" style="width:100%;height:100%;object-fit:contain;"/>'
+      : escapeHtml(person.initials);
+  }
+
+  function canCall(person) {
+    return !!(person && (person.phone || person.hasPhone));
   }
 
   function buildPeople(list) {
@@ -366,8 +456,8 @@ const matchPeople = CONFIG.coworkers.filter(p => {
     }
     list.forEach(function (person) {
       const card = document.createElement("div");
-      card.className = "person-card";
-      card.setAttribute("data-name", person.name);
+      card.className = "person-card" + (person.general ? " person-general" : "");
+      if (!person.general) card.setAttribute("data-name", person.name);
       card.innerHTML = personHtml(person);
       card.addEventListener("click", function () { selectPerson(person); });
       peopleGrid.appendChild(card);
@@ -397,22 +487,76 @@ const matchPeople = CONFIG.coworkers.filter(p => {
   });
 
   // ── Sélection personne ────────────────────────────────
-  // Contact avec téléphone : choix « Prévenir » ou « Appeler »
+  // Contact avec téléphone : choix « Prévenir » ou « Appeler ». Le numéro de l'équipe Hiptown est
+  // dans config.js ; celui d'une entreprise n'est donné par Apps Script qu'avec son code d'accès.
   function selectPerson(person) {
     selectedPerson = person;
-    if (!person.phone) {
+    if (person.general) selectedCompany = CONFIG.companies.find(c => c.id === person.companyId) || selectedCompany;
+    revealedPhone = "";
+    if (!canCall(person)) {
       openForm(person);
       return;
     }
-    choiceAvatar.style.background = person.avatarBg;
-    choiceAvatar.style.color      = person.avatarColor;
-    choiceAvatar.textContent      = person.initials;
+    setAvatar(choiceAvatar, person);
     choiceName.textContent        = person.name;
     choiceRole.textContent        = person.role;
-    choiceCall.href = "tel:" + person.phone;
-    choiceCall.querySelector(".choice-label").textContent = "Appeler " + person.name.split(" ")[0];
+    showChoiceMessage("");
+    choiceCall.href = person.phone ? "tel:" + person.phone : "#";
+    choiceCall.querySelector(".choice-label").textContent = callLabel(person);
     showStep("choice");
   }
+
+  function callLabel(person) {
+    return person.general ? "Appeler l'entreprise" : "Appeler " + person.name.split(" ")[0];
+  }
+
+  /** « +33612345678 » → « +33 6 12 34 56 78 », « 0612345678 » → « 06 12 34 56 78 ». */
+  function formatPhone(phone) {
+    if (/^\+33[0-9]{9}$/.test(phone)) return "+33 " + phone.slice(3, 4) + " " + phone.slice(4).replace(/(\d{2})(?=\d)/g, "$1 ");
+    if (/^0[0-9]{9}$/.test(phone)) return phone.replace(/(\d{2})(?=\d)/g, "$1 ");
+    return phone;
+  }
+
+  function showChoiceMessage(text) {
+    choiceMessage.textContent = text;
+    choiceMessage.hidden = !text;
+  }
+
+  /** Numéro obtenu : affiché (borne sans téléphone) et appel lancé. */
+  function showCall(person) {
+    if (selectedPerson !== person || !revealedPhone) return;
+    showStep("choice");
+    choiceCall.href = "tel:" + revealedPhone;
+    showChoiceMessage("Numéro : " + formatPhone(revealedPhone));
+    window.location.href = "tel:" + revealedPhone;
+  }
+
+  choiceCall.addEventListener("click", function (e) {
+    const person = selectedPerson;
+    if (!person || person.phone) return; // numéro de config.js : le lien tel: suffit
+    e.preventDefault();
+    if (revealedPhone) return showCall(person);
+    const company = CONFIG.companies.find(c => c.id === person.companyId);
+    if (!company) return;
+    if (accessCode) {
+      // Code déjà tapé pour entrer dans la case : il sert aussi pour le numéro
+      revealPhone(person, accessCode).then(function (status) {
+        if (selectedPerson !== person) return;
+        if (status === "ok") return showCall(person);
+        if (status === "wrong") {
+          accessCode = "";
+          pinForCall = person;
+          return openPin(company);
+        }
+        showChoiceMessage(status === "nophone"
+          ? "Pas de numéro pour ce contact. Choisissez « Prévenir de mon arrivée »."
+          : "Appel impossible pour le moment. Choisissez « Prévenir de mon arrivée ».");
+      });
+      return;
+    }
+    pinForCall = person;
+    openPin(company);
+  });
 
   // Entreprise du portail : pas de liste de salariés, le visiteur prévient l'entreprise
   function openCompanyForm(company) {
@@ -437,11 +581,9 @@ const matchPeople = CONFIG.coworkers.filter(p => {
   }
 
   function openForm(person) {
-    selAvatar.style.background = person.avatarBg;
-    selAvatar.style.color      = person.avatarColor;
-    selAvatar.textContent      = person.initials;
+    setAvatar(selAvatar, person);
     selName.textContent        = person.name;
-    selRole.textContent        = person.role;
+    selRole.textContent        = person.general ? "Entreprise" : person.role;
     resetForm();
   }
 
@@ -462,7 +604,10 @@ const matchPeople = CONFIG.coworkers.filter(p => {
     // L'outil Apps Script envoie l'e-mail : la page ne connaît que l'identifiant du destinataire
     const message = visitorMsg.value.trim();
     let payload;
-    if (selectedPerson && selectedPerson.personId) {
+    if (selectedPerson && selectedPerson.general) {
+      // Case « Contacter <entreprise> » : l'e-mail de l'entreprise (Accueil.gs)
+      payload = { companyId: selectedPerson.companyId, pin: accessCode, visitor: name, message: message };
+    } else if (selectedPerson && selectedPerson.personId) {
       // Personne d'une case du portail : son e-mail, sinon celui de l'entreprise (Accueil.gs)
       payload = { companyId: selectedPerson.companyId, personId: selectedPerson.personId, pin: accessCode, visitor: name, message: message };
     } else if (selectedPerson && selectedPerson.id) {
@@ -499,6 +644,8 @@ const matchPeople = CONFIG.coworkers.filter(p => {
 
   function reset() {
     accessCode      = "";
+    pinForCall      = null;
+    revealedPhone   = "";
     selectedPerson  = null;
     selectedCompany = null;
     companySearch.value = "";
@@ -510,7 +657,7 @@ const matchPeople = CONFIG.coworkers.filter(p => {
   // ── Écouteurs ─────────────────────────────────────────
   backBtn.addEventListener("click", function () {
     if (!selectedPerson) return showStep("companies");
-    showStep(selectedPerson.phone ? "choice" : "people");
+    showStep(canCall(selectedPerson) ? "choice" : "people");
   });
   backToPeople.addEventListener("click", function () { showStep("people"); });
   choiceNotify.addEventListener("click", function () { openForm(selectedPerson); });

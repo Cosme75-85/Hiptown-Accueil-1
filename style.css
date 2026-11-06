@@ -409,6 +409,22 @@ input[type="text"].error { border-color: #ef4444; }
 
 .choice-icon { font-size: 32px; }
 
+.choice-message {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+/* Case « Contacter <entreprise> », en tête des personnes */
+.person-general {
+  border-color: var(--navy);
+  background: #fffacc;
+}
+
+.p-avatar, .sel-avatar { overflow: hidden; }
+
 /* ═══════════════════════════
    STEP 3 — CONFIRMATION
 ═══════════════════════════ */
